@@ -39,19 +39,23 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedPassword = password.trim();
+      if (normalizedPassword.length < 8) throw new Error("Password must be at least 8 characters");
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
-          email, password,
-          options: { data: { full_name: fullName }, emailRedirectTo: window.location.origin },
+          email: normalizedEmail,
+          password: normalizedPassword,
+          options: { data: { full_name: fullName.trim() }, emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
         // Sign in immediately (email confirm is off by default in Cloud)
-        await supabase.auth.signInWithPassword({ email, password });
+        await supabase.auth.signInWithPassword({ email: normalizedEmail, password: normalizedPassword });
         await claim({}).catch(() => {});
         toast.success("Account created");
         navigate({ to: "/", replace: true });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: normalizedPassword });
         if (error) throw error;
         await claim({}).catch(() => {});
         navigate({ to: "/", replace: true });
