@@ -387,3 +387,53 @@ export const getDashboardStats = createServerFn({ method: "GET" })
 
     return { totalDue, completed, overdue, active, upcoming, late, compliance, overdueRooms, perEmployee };
   });
+
+// ---------- PointClickCare integration (scaffold) ----------
+
+export const listPccLinks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context);
+    const { data, error } = await context.supabase
+      .from("pcc_task_links")
+      .select("id, room_id, pcc_patient_id, pcc_task_id, updated_at");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const upsertPccLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { room_id: string; pcc_patient_id?: string | null; pcc_task_id?: string | null }) =>
+    z.object({
+      room_id: z.string().uuid(),
+      pcc_patient_id: z.string().max(120).nullish(),
+      pcc_task_id: z.string().max(120).nullish(),
+    }).parse(d))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const patient = data.pcc_patient_id?.trim() || null;
+    const task = data.pcc_task_id?.trim() || null;
+    // If both blank, delete the row instead of storing empty mapping.
+    if (!patient && !task) {
+      const { error } = await context.supabase.from("pcc_task_links").delete().eq("room_id", data.room_id);
+      if (error) throw new Error(error.message);
+      return { ok: true, deleted: true };
+    }
+    const { error } = await context.supabase
+      .from("pcc_task_links")
+      .upsert({ room_id: data.room_id, pcc_patient_id: patient, pcc_task_id: task }, { onConflict: "room_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// Reports which PCC secrets are configured (never returns the values).
+export const getPccIntegrationStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await ensureAdmin(context);
+    return {
+      api_base_set: !!process.env.PCC_API_BASE,
+      client_id_set: !!process.env.PCC_CLIENT_ID,
+      client_secret_set: !!process.env.PCC_CLIENT_SECRET,
+    };
+  });

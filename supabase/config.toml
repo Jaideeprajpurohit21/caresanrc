@@ -1,1 +1,4 @@
 project_id = "sxgafxqnzwnnzrfmufdt"
+
+[functions.notify-pcc-task-complete]
+verify_jwt = false

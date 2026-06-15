@@ -2,13 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Camera, CheckCircle2, XCircle } from "lucide-react";
-import { Scanner } from "@yudiel/react-qr-scanner";
-import { Card, CardContent } from "@/components/ui/card";
+import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getMyStaffHome, submitRoundScan } from "@/lib/api/rounding.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { RoomScanner, ScanResultCard, type ScanResult } from "@/components/RoomScanner";
 
 export const Route = createFileRoute("/_authenticated/staff")({
   head: () => ({ meta: [{ title: "My Rounds — POC Rounding Portal" }] }),
@@ -31,7 +30,7 @@ function StaffPage() {
   const scan = useServerFn(submitRoundScan);
   const qc = useQueryClient();
   const [scanning, setScanning] = useState(false);
-  const [lastResult, setLastResult] = useState<any>(null);
+  const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const signedOutRef = useRef(false);
 
   const { data } = useSuspenseQuery({
@@ -83,49 +82,21 @@ function StaffPage() {
 
   if (scanning) {
     return (
-      <div className="fixed inset-0 z-50 bg-black flex flex-col">
-        <div className="flex items-center justify-between p-3 text-white">
-          <div className="font-semibold">Scan room QR</div>
-          <Button variant="ghost" className="text-white" onClick={() => setScanning(false)}>Close</Button>
-        </div>
-        <div className="flex-1 relative">
-          <Scanner
-            onScan={(codes) => {
-              const text = codes?.[0]?.rawValue;
-              if (!text || mutate.isPending) return;
-              setScanning(false);
-              mutate.mutate(text);
-            }}
-            onError={(e) => console.error(e)}
-            constraints={{ facingMode: "environment" }}
-            styles={{ container: { height: "100%", width: "100%" }, video: { height: "100%", width: "100%", objectFit: "cover" } }}
-            allowMultiple={false}
-          />
-          <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 aspect-square border-4 border-white/80 rounded-2xl pointer-events-none" />
-        </div>
-        <div className="p-4 text-white text-center text-sm">Point your camera at the room QR code</div>
-      </div>
+      <RoomScanner
+        lastResult={lastResult}
+        onScan={(token) => {
+          if (mutate.isPending) return;
+          setScanning(false);
+          mutate.mutate(token);
+        }}
+        onClose={() => setScanning(false)}
+      />
     );
   }
 
   return (
     <div className="mx-auto max-w-md p-4 space-y-4">
-      {lastResult && (
-        <Card className={lastResult.ok ? "border-green-500/40 bg-green-500/5" : "border-destructive/40 bg-destructive/5"}>
-          <CardContent className="p-4 flex items-start gap-3">
-            {lastResult.ok
-              ? <CheckCircle2 className="h-6 w-6 text-green-600 shrink-0 mt-0.5" />
-              : <XCircle className="h-6 w-6 text-destructive shrink-0 mt-0.5" />}
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold">{lastResult.title}</div>
-              {lastResult.message ? (
-                <div className="text-sm text-muted-foreground mt-1">{lastResult.message}</div>
-              ) : null}
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setLastResult(null)}>Back</Button>
-          </CardContent>
-        </Card>
-      )}
+      {lastResult && <ScanResultCard result={lastResult} onDismiss={() => setLastResult(null)} />}
 
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{greeting()}, {data.full_name || "there"}</h1>
