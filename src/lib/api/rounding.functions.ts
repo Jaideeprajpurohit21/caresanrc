@@ -135,10 +135,20 @@ export const listStaff = createServerFn({ method: "GET" })
     await ensureAdmin(context);
     const { data, error } = await context.supabase
       .from("profiles")
-      .select("id,full_name,employee_id,email,active,user_roles(role)")
+      .select("id,full_name,employee_id,email,active")
       .order("full_name");
     if (error) throw new Error(error.message);
-    return data;
+    const { data: roles, error: rErr } = await context.supabase
+      .from("user_roles")
+      .select("user_id,role");
+    if (rErr) throw new Error(rErr.message);
+    const byUser = new Map<string, string[]>();
+    for (const r of roles ?? []) {
+      const arr = byUser.get(r.user_id) ?? [];
+      arr.push(r.role);
+      byUser.set(r.user_id, arr);
+    }
+    return (data ?? []).map((p) => ({ ...p, user_roles: (byUser.get(p.id) ?? []).map((role) => ({ role })) }));
   });
 
 export const createStaff = createServerFn({ method: "POST" })
