@@ -2,13 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Camera, CheckCircle2, XCircle } from "lucide-react";
-import { Scanner } from "@yudiel/react-qr-scanner";
-import { Card, CardContent } from "@/components/ui/card";
+import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getMyStaffHome, submitRoundScan } from "@/lib/api/rounding.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { RoomScanner, ScanResultCard, type ScanResult } from "@/components/RoomScanner";
 
 export const Route = createFileRoute("/_authenticated/staff")({
   head: () => ({ meta: [{ title: "My Rounds — POC Rounding Portal" }] }),
