@@ -147,7 +147,3 @@ export function ScanResultCard({ result, onDismiss }: { result: ScanResult; onDi
     </div>
   );
 }
-
-// Auto-noop export so tree-shaking doesn't strip the effect import in case
-// downstream lint rules complain about React import.
-export const __noop = () => useEffect(() => undefined, []);
