@@ -21,6 +21,7 @@ import { Route as AuthenticatedAdminScheduleRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminRoomsRouteImport } from './routes/_authenticated.admin.rooms'
 import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated.admin.reports'
 import { Route as AuthenticatedAdminLiveRouteImport } from './routes/_authenticated.admin.live'
+import { Route as AuthenticatedAdminIntegrationsRouteImport } from './routes/_authenticated.admin.integrations'
 import { Route as AuthenticatedAdminFacilitiesRouteImport } from './routes/_authenticated.admin.facilities'
 import { Route as AuthenticatedAdminRoomsPrintRouteImport } from './routes/_authenticated.admin.rooms.print'
 
@@ -85,6 +86,12 @@ const AuthenticatedAdminLiveRoute = AuthenticatedAdminLiveRouteImport.update({
   path: '/live',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminIntegrationsRoute =
+  AuthenticatedAdminIntegrationsRouteImport.update({
+    id: '/integrations',
+    path: '/integrations',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminFacilitiesRoute =
   AuthenticatedAdminFacilitiesRouteImport.update({
     id: '/facilities',
@@ -105,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/staff': typeof AuthenticatedStaffRoute
   '/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
+  '/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
   '/admin/live': typeof AuthenticatedAdminLiveRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/rooms': typeof AuthenticatedAdminRoomsRouteWithChildren
@@ -119,6 +127,7 @@ export interface FileRoutesByTo {
   '/scan': typeof ScanRoute
   '/staff': typeof AuthenticatedStaffRoute
   '/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
+  '/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
   '/admin/live': typeof AuthenticatedAdminLiveRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/rooms': typeof AuthenticatedAdminRoomsRouteWithChildren
@@ -136,6 +145,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/staff': typeof AuthenticatedStaffRoute
   '/_authenticated/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
+  '/_authenticated/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
   '/_authenticated/admin/live': typeof AuthenticatedAdminLiveRoute
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/rooms': typeof AuthenticatedAdminRoomsRouteWithChildren
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/staff'
     | '/admin/facilities'
+    | '/admin/integrations'
     | '/admin/live'
     | '/admin/reports'
     | '/admin/rooms'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/staff'
     | '/admin/facilities'
+    | '/admin/integrations'
     | '/admin/live'
     | '/admin/reports'
     | '/admin/rooms'
@@ -183,6 +195,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/staff'
     | '/_authenticated/admin/facilities'
+    | '/_authenticated/admin/integrations'
     | '/_authenticated/admin/live'
     | '/_authenticated/admin/reports'
     | '/_authenticated/admin/rooms'
@@ -285,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLiveRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/integrations': {
+      id: '/_authenticated/admin/integrations'
+      path: '/integrations'
+      fullPath: '/admin/integrations'
+      preLoaderRoute: typeof AuthenticatedAdminIntegrationsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/facilities': {
       id: '/_authenticated/admin/facilities'
       path: '/facilities'
@@ -318,6 +338,7 @@ const AuthenticatedAdminRoomsRouteWithChildren =
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminFacilitiesRoute: typeof AuthenticatedAdminFacilitiesRoute
+  AuthenticatedAdminIntegrationsRoute: typeof AuthenticatedAdminIntegrationsRoute
   AuthenticatedAdminLiveRoute: typeof AuthenticatedAdminLiveRoute
   AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
   AuthenticatedAdminRoomsRoute: typeof AuthenticatedAdminRoomsRouteWithChildren
@@ -328,6 +349,7 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminFacilitiesRoute: AuthenticatedAdminFacilitiesRoute,
+  AuthenticatedAdminIntegrationsRoute: AuthenticatedAdminIntegrationsRoute,
   AuthenticatedAdminLiveRoute: AuthenticatedAdminLiveRoute,
   AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
   AuthenticatedAdminRoomsRoute: AuthenticatedAdminRoomsRouteWithChildren,
