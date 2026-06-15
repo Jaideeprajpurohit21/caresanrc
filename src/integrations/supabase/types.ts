@@ -14,16 +14,363 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      facilities: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      floors: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          unit_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          unit_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floors_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string | null
+          employee_id: string | null
+          full_name: string
+          id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          employee_id?: string | null
+          full_name?: string
+          id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          employee_id?: string | null
+          full_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          created_at: string
+          floor_id: string
+          id: string
+          qr_token: string
+          room_number: string
+        }
+        Insert: {
+          created_at?: string
+          floor_id: string
+          id?: string
+          qr_token?: string
+          room_number: string
+        }
+        Update: {
+          created_at?: string
+          floor_id?: string
+          id?: string
+          qr_token?: string
+          room_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_floor_id_fkey"
+            columns: ["floor_id"]
+            isOneToOne: false
+            referencedRelation: "floors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rounding_tasks: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          room_id: string
+          scheduled_at: string
+          shift_assignment_id: string
+          status: Database["public"]["Enums"]["task_status"]
+          window_end: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          room_id: string
+          scheduled_at: string
+          shift_assignment_id: string
+          status?: Database["public"]["Enums"]["task_status"]
+          window_end: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          room_id?: string
+          scheduled_at?: string
+          shift_assignment_id?: string
+          status?: Database["public"]["Enums"]["task_status"]
+          window_end?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rounding_tasks_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rounding_tasks_shift_assignment_id_fkey"
+            columns: ["shift_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "shift_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scan_logs: {
+        Row: {
+          device_user_agent: string | null
+          id: string
+          result: Database["public"]["Enums"]["scan_result"]
+          room_id: string | null
+          scanned_at: string
+          task_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          device_user_agent?: string | null
+          id?: string
+          result: Database["public"]["Enums"]["scan_result"]
+          room_id?: string | null
+          scanned_at?: string
+          task_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          device_user_agent?: string | null
+          id?: string
+          result?: Database["public"]["Enums"]["scan_result"]
+          room_id?: string | null
+          scanned_at?: string
+          task_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_logs_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "rounding_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_assignments: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          shift_date: string
+          shift_id: string
+          starts_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          shift_date: string
+          shift_id: string
+          starts_at: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          shift_date?: string
+          shift_id?: string
+          starts_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_assignments_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shifts: {
+        Row: {
+          created_at: string
+          end_time: string
+          facility_id: string
+          grace_minutes: number
+          id: string
+          name: string
+          rounding_interval_minutes: number
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          facility_id: string
+          grace_minutes?: number
+          id?: string
+          name: string
+          rounding_interval_minutes?: number
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          facility_id?: string
+          grace_minutes?: number
+          id?: string
+          name?: string
+          rounding_interval_minutes?: number
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          created_at: string
+          facility_id: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          facility_id: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          facility_id?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_admin_if_none: { Args: { _user_id: string }; Returns: boolean }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "staff"
+      scan_result:
+        | "success"
+        | "invalid_qr"
+        | "wrong_room"
+        | "too_early"
+        | "expired"
+        | "duplicate"
+        | "no_assignment"
+      task_status: "pending" | "completed" | "overdue"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +497,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "staff"],
+      scan_result: [
+        "success",
+        "invalid_qr",
+        "wrong_room",
+        "too_early",
+        "expired",
+        "duplicate",
+        "no_assignment",
+      ],
+      task_status: ["pending", "completed", "overdue"],
+    },
   },
 } as const
