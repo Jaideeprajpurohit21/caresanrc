@@ -302,20 +302,22 @@ export const getFloorStatus = createServerFn({ method: "POST" })
     return rows ?? [];
   });
 
-export const getMyFloorStatus = createServerFn({ method: "GET" })
+// Staff home: just identity + a small personal count of today's scans.
+export const getMyStaffHome = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data: profile } = await context.supabase
-      .from("profiles").select("floor_id,full_name").eq("id", context.userId).maybeSingle();
-    if (!profile?.floor_id) {
-      return { floor_id: null, full_name: profile?.full_name ?? "", schedule: null, rows: [] };
-    }
-    const [{ data: rows, error: rErr }, { data: sched }] = await Promise.all([
-      context.supabase.rpc("get_floor_status", { p_floor_id: profile.floor_id }),
-      context.supabase.from("round_schedules").select("shift_name").eq("floor_id", profile.floor_id).eq("active", true).maybeSingle(),
-    ]);
-    if (rErr) throw new Error(rErr.message);
-    return { floor_id: profile.floor_id, full_name: profile.full_name, schedule: sched, rows: rows ?? [] };
+      .from("profiles").select("full_name,email").eq("id", context.userId).maybeSingle();
+    const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+    const { count } = await context.supabase
+      .from("scan_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", context.userId)
+      .gte("completed_at", dayStart.toISOString());
+    return {
+      full_name: profile?.full_name ?? profile?.email ?? "",
+      scans_today: count ?? 0,
+    };
   });
 
 export const getRoundReport = createServerFn({ method: "POST" })
