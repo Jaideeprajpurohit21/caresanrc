@@ -1,29 +1,32 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getMe } from "@/lib/api/rounding.functions";
 
 export const Route = createFileRoute("/")({
+  ssr: false,
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "POC Rounding Portal" },
+      { name: "description", content: "Anti-cheating QR rounding for nursing homes and assisted living facilities." },
     ],
   }),
-  component: Index,
+  component: IndexRedirect,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
+function IndexRedirect() {
+  const navigate = useNavigate();
+  const me = useServerFn(getMe);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) { navigate({ to: "/auth", replace: true }); return; }
+      const profile = await me({}).catch(() => null);
+      if (profile?.isAdmin) navigate({ to: "/admin", replace: true });
+      else navigate({ to: "/staff", replace: true });
+    })();
+  }, [me, navigate]);
+  return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Loading…</div>;
 }
+
