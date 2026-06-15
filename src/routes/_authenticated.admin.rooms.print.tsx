@@ -31,14 +31,14 @@ function QRCard({ room }: { room: any }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     if (ref.current) {
-      QRCode.toCanvas(ref.current, `rounding://room/${room.qr_token}`, { width: 220, margin: 1 }).catch(() => {});
+      QRCode.toCanvas(ref.current, String(room.qr_token), { width: 220, margin: 1 }).catch(() => {});
     }
   }, [room.qr_token]);
   return (
     <div className="border rounded-md p-3 text-center bg-white text-black break-inside-avoid">
       <canvas ref={ref} className="mx-auto" />
       <div className="mt-2 font-bold text-lg">Room {room.room_number}</div>
-      <div className="text-xs text-gray-600">{room.floors?.units?.name} · {room.floors?.name}</div>
+      <div className="text-xs text-gray-600">{room.floors?.facilities?.name} · {room.floors?.name}</div>
     </div>
   );
 }

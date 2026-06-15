@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { listFacilityTree, createFacility, createUnit, createFloor } from "@/lib/api/rounding.functions";
+import { listFacilities, createFacility, createFloor } from "@/lib/api/rounding.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,17 +14,17 @@ export const Route = createFileRoute("/_authenticated/admin/facilities")({
 });
 
 function Page() {
-  const fn = useServerFn(listFacilityTree);
+  const fn = useServerFn(listFacilities);
   const createFac = useServerFn(createFacility);
-  const createU = useServerFn(createUnit);
   const createF = useServerFn(createFloor);
   const qc = useQueryClient();
-  const { data } = useSuspenseQuery({ queryKey: ["facility-tree"], queryFn: () => fn({}) });
+  const { data } = useSuspenseQuery({ queryKey: ["facilities"], queryFn: () => fn({}) });
 
   const [newFac, setNewFac] = useState("");
+  const [tz, setTz] = useState("America/Chicago");
   const addFac = useMutation({
-    mutationFn: () => createFac({ data: { name: newFac } }),
-    onSuccess: () => { setNewFac(""); toast.success("Facility added"); qc.invalidateQueries({ queryKey: ["facility-tree"] }); },
+    mutationFn: () => createFac({ data: { name: newFac, timezone: tz } }),
+    onSuccess: () => { setNewFac(""); toast.success("Facility added"); qc.invalidateQueries({ queryKey: ["facilities"] }); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -33,34 +33,29 @@ function Page() {
       <h1 className="text-2xl font-bold">Facilities</h1>
       <Card>
         <CardHeader><CardTitle className="text-base">New facility</CardTitle></CardHeader>
-        <CardContent className="flex gap-2">
+        <CardContent className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2">
           <Input placeholder="Facility name" value={newFac} onChange={(e) => setNewFac(e.target.value)} />
+          <Input placeholder="Timezone (IANA, e.g. America/Chicago)" value={tz} onChange={(e) => setTz(e.target.value)} />
           <Button onClick={() => addFac.mutate()} disabled={!newFac || addFac.isPending}>Add</Button>
         </CardContent>
       </Card>
 
       {(data ?? []).map((f: any) => (
         <Card key={f.id}>
-          <CardHeader><CardTitle className="text-base">{f.name}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-base">{f.name}</CardTitle>
+            <div className="text-xs text-muted-foreground">{f.timezone}</div>
+          </CardHeader>
           <CardContent className="space-y-3">
-            <AddChild placeholder="New unit name" onAdd={async (name) => {
-              await createU({ data: { facility_id: f.id, name } });
-              qc.invalidateQueries({ queryKey: ["facility-tree"] });
+            <AddFloor onAdd={async (name) => {
+              await createF({ data: { facility_id: f.id, name } });
+              qc.invalidateQueries({ queryKey: ["facilities"] });
             }} />
-            {(f.units ?? []).map((u: any) => (
-              <div key={u.id} className="rounded-md border p-3 space-y-2">
-                <div className="font-medium">Unit · {u.name}</div>
-                <AddChild placeholder="New floor name" onAdd={async (name) => {
-                  await createF({ data: { unit_id: u.id, name } });
-                  qc.invalidateQueries({ queryKey: ["facility-tree"] });
-                }} />
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  {(u.floors ?? []).map((fl: any) => (
-                    <li key={fl.id}>Floor · {fl.name} ({(fl.rooms ?? []).length} rooms)</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            <ul className="text-sm text-muted-foreground space-y-1">
+              {(f.floors ?? []).map((fl: any) => (
+                <li key={fl.id}>Floor · {fl.name}</li>
+              ))}
+            </ul>
           </CardContent>
         </Card>
       ))}
@@ -68,18 +63,18 @@ function Page() {
   );
 }
 
-function AddChild({ placeholder, onAdd }: { placeholder: string; onAdd: (name: string) => Promise<any> }) {
+function AddFloor({ onAdd }: { onAdd: (name: string) => Promise<any> }) {
   const [val, setVal] = useState("");
   const [busy, setBusy] = useState(false);
   return (
     <div className="flex gap-2">
-      <Input placeholder={placeholder} value={val} onChange={(e) => setVal(e.target.value)} />
+      <Input placeholder="New floor name" value={val} onChange={(e) => setVal(e.target.value)} />
       <Button variant="secondary" disabled={!val || busy} onClick={async () => {
         setBusy(true);
         try { await onAdd(val); setVal(""); toast.success("Added"); }
         catch (e: any) { toast.error(e.message); }
         finally { setBusy(false); }
-      }}>Add</Button>
+      }}>Add floor</Button>
     </div>
   );
 }

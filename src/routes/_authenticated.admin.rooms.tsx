@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { listRooms, listFacilityTree, bulkAddRooms, deleteRoom } from "@/lib/api/rounding.functions";
+import { listRooms, listFacilities, bulkAddRooms, deleteRoom } from "@/lib/api/rounding.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,17 +17,17 @@ export const Route = createFileRoute("/_authenticated/admin/rooms")({
 
 function Page() {
   const fn = useServerFn(listRooms);
-  const tree = useServerFn(listFacilityTree);
+  const lFac = useServerFn(listFacilities);
   const bulk = useServerFn(bulkAddRooms);
   const del = useServerFn(deleteRoom);
   const qc = useQueryClient();
   const { data: rooms } = useSuspenseQuery({ queryKey: ["rooms"], queryFn: () => fn({}) });
-  const { data: facilities } = useSuspenseQuery({ queryKey: ["facility-tree"], queryFn: () => tree({}) });
+  const { data: facilities } = useSuspenseQuery({ queryKey: ["facilities"], queryFn: () => lFac({}) });
 
   const allFloors = useMemo(() => {
     const out: { id: string; label: string }[] = [];
-    for (const f of facilities ?? []) for (const u of (f as any).units ?? []) for (const fl of u.floors ?? [])
-      out.push({ id: fl.id, label: `${(f as any).name} · ${u.name} · ${fl.name}` });
+    for (const f of facilities ?? []) for (const fl of (f as any).floors ?? [])
+      out.push({ id: fl.id, label: `${(f as any).name} · ${fl.name}` });
     return out;
   }, [facilities]);
 
@@ -75,7 +75,7 @@ function Page() {
               <li key={r.id} className="py-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                 <div className="min-w-0">
                   <div className="font-medium">Room {r.room_number}</div>
-                  <div className="text-xs text-muted-foreground truncate">{r.floors?.units?.facilities?.name} · {r.floors?.units?.name} · {r.floors?.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">{r.floors?.facilities?.name} · {r.floors?.name}</div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => removeRoom.mutate(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
               </li>
