@@ -24,6 +24,7 @@ export function AppShell({
     { to: "/admin/staff", label: "Staff", Icon: Users },
     { to: "/admin/live", label: "Live", Icon: Activity },
     { to: "/admin/reports", label: "Reports", Icon: FileBarChart },
+    { to: "/admin/integrations", label: "Integrations", Icon: Plug },
   ] as const;
 
   return (
