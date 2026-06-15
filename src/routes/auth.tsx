@@ -17,11 +17,23 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Sign in to the POC Rounding Portal for nursing-home rounding." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    redirect: typeof s.redirect === "string" ? s.redirect : undefined,
+  }),
   component: AuthPage,
 });
 
+function safeRedirect(target: string | undefined): string {
+  if (!target) return "/";
+  // Only allow same-origin path redirects (must start with single slash, no protocol).
+  if (!/^\/[^/]/.test(target) && target !== "/") return "/";
+  return target;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
+  const next = safeRedirect(search.redirect);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,9 +43,9 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/", replace: true });
+      if (data.session) navigate({ to: next, replace: true });
     });
-  }, [navigate]);
+  }, [navigate, next]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

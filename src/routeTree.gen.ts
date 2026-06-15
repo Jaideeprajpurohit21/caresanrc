@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ScanRouteImport } from './routes/scan'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,6 +24,11 @@ import { Route as AuthenticatedAdminLiveRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminFacilitiesRouteImport } from './routes/_authenticated.admin.facilities'
 import { Route as AuthenticatedAdminRoomsPrintRouteImport } from './routes/_authenticated.admin.rooms.print'
 
+const ScanRoute = ScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -95,6 +101,7 @@ const AuthenticatedAdminRoomsPrintRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/scan': typeof ScanRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/staff': typeof AuthenticatedStaffRoute
   '/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/scan': typeof ScanRoute
   '/staff': typeof AuthenticatedStaffRoute
   '/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
   '/admin/live': typeof AuthenticatedAdminLiveRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
+  '/scan': typeof ScanRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/staff': typeof AuthenticatedStaffRoute
   '/_authenticated/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/scan'
     | '/admin'
     | '/staff'
     | '/admin/facilities'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/scan'
     | '/staff'
     | '/admin/facilities'
     | '/admin/live'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/scan'
     | '/_authenticated/admin'
     | '/_authenticated/staff'
     | '/_authenticated/admin/facilities'
@@ -184,10 +196,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ScanRoute: typeof ScanRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/scan': {
+      id: '/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof ScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -337,6 +357,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
+  ScanRoute: ScanRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
