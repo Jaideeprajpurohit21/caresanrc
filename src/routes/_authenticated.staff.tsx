@@ -30,7 +30,7 @@ function StaffPage() {
   const scan = useServerFn(submitRoundScan);
   const qc = useQueryClient();
   const [scanning, setScanning] = useState(false);
-  const [lastResult, setLastResult] = useState<any>(null);
+  const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const signedOutRef = useRef(false);
 
   const { data } = useSuspenseQuery({
