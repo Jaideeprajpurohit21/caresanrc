@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedStaffRouteImport } from './routes/_authenticated.staff'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated.admin.staff'
 import { Route as AuthenticatedAdminShiftsRouteImport } from './routes/_authenticated.admin.shifts'
 import { Route as AuthenticatedAdminRoomsRouteImport } from './routes/_authenticated.admin.rooms'
@@ -44,6 +45,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
 const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
   id: '/staff',
@@ -90,18 +96,19 @@ export interface FileRoutesByFullPath {
   '/admin/rooms': typeof AuthenticatedAdminRoomsRouteWithChildren
   '/admin/shifts': typeof AuthenticatedAdminShiftsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/rooms/print': typeof AuthenticatedAdminRoomsPrintRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/staff': typeof AuthenticatedStaffRoute
   '/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/rooms': typeof AuthenticatedAdminRoomsRouteWithChildren
   '/admin/shifts': typeof AuthenticatedAdminShiftsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/rooms/print': typeof AuthenticatedAdminRoomsPrintRoute
 }
 export interface FileRoutesById {
@@ -116,6 +123,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/rooms': typeof AuthenticatedAdminRoomsRouteWithChildren
   '/_authenticated/admin/shifts': typeof AuthenticatedAdminShiftsRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/rooms/print': typeof AuthenticatedAdminRoomsPrintRoute
 }
 export interface FileRouteTypes {
@@ -130,18 +138,19 @@ export interface FileRouteTypes {
     | '/admin/rooms'
     | '/admin/shifts'
     | '/admin/staff'
+    | '/admin/'
     | '/admin/rooms/print'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
-    | '/admin'
     | '/staff'
     | '/admin/facilities'
     | '/admin/reports'
     | '/admin/rooms'
     | '/admin/shifts'
     | '/admin/staff'
+    | '/admin'
     | '/admin/rooms/print'
   id:
     | '__root__'
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/rooms'
     | '/_authenticated/admin/shifts'
     | '/_authenticated/admin/staff'
+    | '/_authenticated/admin/'
     | '/_authenticated/admin/rooms/print'
   fileRoutesById: FileRoutesById
 }
@@ -200,6 +210,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/staff': {
       id: '/_authenticated/admin/staff'
@@ -266,6 +283,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminRoomsRoute: typeof AuthenticatedAdminRoomsRouteWithChildren
   AuthenticatedAdminShiftsRoute: typeof AuthenticatedAdminShiftsRoute
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
@@ -274,6 +292,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminRoomsRoute: AuthenticatedAdminRoomsRouteWithChildren,
   AuthenticatedAdminShiftsRoute: AuthenticatedAdminShiftsRoute,
   AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =
@@ -301,13 +320,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
