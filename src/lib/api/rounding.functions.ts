@@ -355,7 +355,7 @@ export const scanRoomQr = createServerFn({ method: "POST" })
 
     const logScan = async (room_id: string | null, task_id: string | null, result: string) => {
       await supabase.from("scan_logs").insert({
-        room_id, task_id, user_id: userId, device_user_agent: ua, result,
+        room_id, task_id, user_id: userId, device_user_agent: ua, result: result as any,
       });
     };
 
