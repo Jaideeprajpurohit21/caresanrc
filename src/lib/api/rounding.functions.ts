@@ -92,7 +92,7 @@ export const bulkAddRooms = createServerFn({ method: "POST" })
       start: z.number().int().min(0).max(9999),
       end: z.number().int().min(0).max(9999),
       prefix: z.string().max(10).optional(),
-    }).refine((v) => v.end >= v.start && v.end - v.start <= 200, { message: "Invalid range" }).parse(d))
+    }).refine((v) => v.end >= v.start && v.end - v.start <= 500, { message: "Range must be ascending and at most 500 rooms at a time" }).parse(d))
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
     const rows: any[] = [];
