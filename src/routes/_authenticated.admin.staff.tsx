@@ -27,12 +27,6 @@ function Page() {
   const { data } = useSuspenseQuery({ queryKey: ["staff"], queryFn: () => fn({}) });
   const { data: facilities } = useSuspenseQuery({ queryKey: ["facilities"], queryFn: () => lFac({}) });
 
-  const allFloors = useMemo(() => {
-    const out: { id: string; facility_id: string; label: string }[] = [];
-    for (const f of facilities ?? []) for (const fl of (f as any).floors ?? [])
-      out.push({ id: fl.id, facility_id: f.id, label: `${(f as any).name} · ${fl.name}` });
-    return out;
-  }, [facilities]);
 
   const facilityOptions = useMemo(
     () => (facilities ?? []).map((f: any) => ({ id: f.id, label: f.name as string })),
