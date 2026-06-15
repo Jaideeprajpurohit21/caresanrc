@@ -16,9 +16,10 @@ import { Route as AuthenticatedStaffRouteImport } from './routes/_authenticated.
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated.admin.staff'
-import { Route as AuthenticatedAdminShiftsRouteImport } from './routes/_authenticated.admin.shifts'
+import { Route as AuthenticatedAdminScheduleRouteImport } from './routes/_authenticated.admin.schedule'
 import { Route as AuthenticatedAdminRoomsRouteImport } from './routes/_authenticated.admin.rooms'
 import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated.admin.reports'
+import { Route as AuthenticatedAdminLiveRouteImport } from './routes/_authenticated.admin.live'
 import { Route as AuthenticatedAdminFacilitiesRouteImport } from './routes/_authenticated.admin.facilities'
 import { Route as AuthenticatedAdminRoomsPrintRouteImport } from './routes/_authenticated.admin.rooms.print'
 
@@ -56,10 +57,10 @@ const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
   path: '/staff',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedAdminShiftsRoute =
-  AuthenticatedAdminShiftsRouteImport.update({
-    id: '/shifts',
-    path: '/shifts',
+const AuthenticatedAdminScheduleRoute =
+  AuthenticatedAdminScheduleRouteImport.update({
+    id: '/schedule',
+    path: '/schedule',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminRoomsRoute = AuthenticatedAdminRoomsRouteImport.update({
@@ -73,6 +74,11 @@ const AuthenticatedAdminReportsRoute =
     path: '/reports',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminLiveRoute = AuthenticatedAdminLiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminFacilitiesRoute =
   AuthenticatedAdminFacilitiesRouteImport.update({
     id: '/facilities',
@@ -92,9 +98,10 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/staff': typeof AuthenticatedStaffRoute
   '/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
+  '/admin/live': typeof AuthenticatedAdminLiveRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/rooms': typeof AuthenticatedAdminRoomsRouteWithChildren
-  '/admin/shifts': typeof AuthenticatedAdminShiftsRoute
+  '/admin/schedule': typeof AuthenticatedAdminScheduleRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/rooms/print': typeof AuthenticatedAdminRoomsPrintRoute
@@ -104,9 +111,10 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/staff': typeof AuthenticatedStaffRoute
   '/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
+  '/admin/live': typeof AuthenticatedAdminLiveRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/rooms': typeof AuthenticatedAdminRoomsRouteWithChildren
-  '/admin/shifts': typeof AuthenticatedAdminShiftsRoute
+  '/admin/schedule': typeof AuthenticatedAdminScheduleRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/rooms/print': typeof AuthenticatedAdminRoomsPrintRoute
@@ -119,9 +127,10 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/staff': typeof AuthenticatedStaffRoute
   '/_authenticated/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
+  '/_authenticated/admin/live': typeof AuthenticatedAdminLiveRoute
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/rooms': typeof AuthenticatedAdminRoomsRouteWithChildren
-  '/_authenticated/admin/shifts': typeof AuthenticatedAdminShiftsRoute
+  '/_authenticated/admin/schedule': typeof AuthenticatedAdminScheduleRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/rooms/print': typeof AuthenticatedAdminRoomsPrintRoute
@@ -134,9 +143,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/staff'
     | '/admin/facilities'
+    | '/admin/live'
     | '/admin/reports'
     | '/admin/rooms'
-    | '/admin/shifts'
+    | '/admin/schedule'
     | '/admin/staff'
     | '/admin/'
     | '/admin/rooms/print'
@@ -146,9 +156,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/staff'
     | '/admin/facilities'
+    | '/admin/live'
     | '/admin/reports'
     | '/admin/rooms'
-    | '/admin/shifts'
+    | '/admin/schedule'
     | '/admin/staff'
     | '/admin'
     | '/admin/rooms/print'
@@ -160,9 +171,10 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/staff'
     | '/_authenticated/admin/facilities'
+    | '/_authenticated/admin/live'
     | '/_authenticated/admin/reports'
     | '/_authenticated/admin/rooms'
-    | '/_authenticated/admin/shifts'
+    | '/_authenticated/admin/schedule'
     | '/_authenticated/admin/staff'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/rooms/print'
@@ -225,11 +237,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminStaffRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/admin/shifts': {
-      id: '/_authenticated/admin/shifts'
-      path: '/shifts'
-      fullPath: '/admin/shifts'
-      preLoaderRoute: typeof AuthenticatedAdminShiftsRouteImport
+    '/_authenticated/admin/schedule': {
+      id: '/_authenticated/admin/schedule'
+      path: '/schedule'
+      fullPath: '/admin/schedule'
+      preLoaderRoute: typeof AuthenticatedAdminScheduleRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/rooms': {
@@ -244,6 +256,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/admin/reports'
       preLoaderRoute: typeof AuthenticatedAdminReportsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/live': {
+      id: '/_authenticated/admin/live'
+      path: '/live'
+      fullPath: '/admin/live'
+      preLoaderRoute: typeof AuthenticatedAdminLiveRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/facilities': {
@@ -279,18 +298,20 @@ const AuthenticatedAdminRoomsRouteWithChildren =
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminFacilitiesRoute: typeof AuthenticatedAdminFacilitiesRoute
+  AuthenticatedAdminLiveRoute: typeof AuthenticatedAdminLiveRoute
   AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
   AuthenticatedAdminRoomsRoute: typeof AuthenticatedAdminRoomsRouteWithChildren
-  AuthenticatedAdminShiftsRoute: typeof AuthenticatedAdminShiftsRoute
+  AuthenticatedAdminScheduleRoute: typeof AuthenticatedAdminScheduleRoute
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminFacilitiesRoute: AuthenticatedAdminFacilitiesRoute,
+  AuthenticatedAdminLiveRoute: AuthenticatedAdminLiveRoute,
   AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
   AuthenticatedAdminRoomsRoute: AuthenticatedAdminRoomsRouteWithChildren,
-  AuthenticatedAdminShiftsRoute: AuthenticatedAdminShiftsRoute,
+  AuthenticatedAdminScheduleRoute: AuthenticatedAdminScheduleRoute,
   AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }

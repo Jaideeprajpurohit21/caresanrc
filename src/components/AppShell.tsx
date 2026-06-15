@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, LayoutDashboard, Building2, DoorOpen, Users, Clock, FileBarChart, ScanLine } from "lucide-react";
+import { LogOut, LayoutDashboard, Building2, DoorOpen, Users, Clock, FileBarChart, ScanLine, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
 
@@ -20,8 +20,9 @@ export function AppShell({
     { to: "/admin", label: "Dashboard", Icon: LayoutDashboard },
     { to: "/admin/facilities", label: "Facilities", Icon: Building2 },
     { to: "/admin/rooms", label: "Rooms & QR", Icon: DoorOpen },
+    { to: "/admin/schedule", label: "Schedule", Icon: Clock },
     { to: "/admin/staff", label: "Staff", Icon: Users },
-    { to: "/admin/shifts", label: "Shifts", Icon: Clock },
+    { to: "/admin/live", label: "Live", Icon: Activity },
     { to: "/admin/reports", label: "Reports", Icon: FileBarChart },
   ] as const;
 
