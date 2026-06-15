@@ -9,38 +9,177 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedStaffRouteImport } from './routes/_authenticated.staff'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
+import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated.admin.staff'
+import { Route as AuthenticatedAdminShiftsRouteImport } from './routes/_authenticated.admin.shifts'
+import { Route as AuthenticatedAdminRoomsRouteImport } from './routes/_authenticated.admin.rooms'
+import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated.admin.reports'
+import { Route as AuthenticatedAdminFacilitiesRouteImport } from './routes/_authenticated.admin.facilities'
+import { Route as AuthenticatedAdminRoomsPrintRouteImport } from './routes/_authenticated.admin.rooms.print'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedStaffRoute = AuthenticatedStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminShiftsRoute =
+  AuthenticatedAdminShiftsRouteImport.update({
+    id: '/shifts',
+    path: '/shifts',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminRoomsRoute = AuthenticatedAdminRoomsRouteImport.update({
+  id: '/rooms',
+  path: '/rooms',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminReportsRoute =
+  AuthenticatedAdminReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminFacilitiesRoute =
+  AuthenticatedAdminFacilitiesRouteImport.update({
+    id: '/facilities',
+    path: '/facilities',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminRoomsPrintRoute =
+  AuthenticatedAdminRoomsPrintRouteImport.update({
+    id: '/print',
+    path: '/print',
+    getParentRoute: () => AuthenticatedAdminRoomsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/staff': typeof AuthenticatedStaffRoute
+  '/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
+  '/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/admin/rooms': typeof AuthenticatedAdminRoomsRouteWithChildren
+  '/admin/shifts': typeof AuthenticatedAdminShiftsRoute
+  '/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/admin/rooms/print': typeof AuthenticatedAdminRoomsPrintRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/staff': typeof AuthenticatedStaffRoute
+  '/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
+  '/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/admin/rooms': typeof AuthenticatedAdminRoomsRouteWithChildren
+  '/admin/shifts': typeof AuthenticatedAdminShiftsRoute
+  '/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/admin/rooms/print': typeof AuthenticatedAdminRoomsPrintRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/staff': typeof AuthenticatedStaffRoute
+  '/_authenticated/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
+  '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/_authenticated/admin/rooms': typeof AuthenticatedAdminRoomsRouteWithChildren
+  '/_authenticated/admin/shifts': typeof AuthenticatedAdminShiftsRoute
+  '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/_authenticated/admin/rooms/print': typeof AuthenticatedAdminRoomsPrintRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/admin'
+    | '/staff'
+    | '/admin/facilities'
+    | '/admin/reports'
+    | '/admin/rooms'
+    | '/admin/shifts'
+    | '/admin/staff'
+    | '/admin/rooms/print'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/admin'
+    | '/staff'
+    | '/admin/facilities'
+    | '/admin/reports'
+    | '/admin/rooms'
+    | '/admin/shifts'
+    | '/admin/staff'
+    | '/admin/rooms/print'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/admin'
+    | '/_authenticated/staff'
+    | '/_authenticated/admin/facilities'
+    | '/_authenticated/admin/reports'
+    | '/_authenticated/admin/rooms'
+    | '/_authenticated/admin/shifts'
+    | '/_authenticated/admin/staff'
+    | '/_authenticated/admin/rooms/print'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +187,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/staff': {
+      id: '/_authenticated/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof AuthenticatedStaffRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin/staff': {
+      id: '/_authenticated/admin/staff'
+      path: '/staff'
+      fullPath: '/admin/staff'
+      preLoaderRoute: typeof AuthenticatedAdminStaffRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/shifts': {
+      id: '/_authenticated/admin/shifts'
+      path: '/shifts'
+      fullPath: '/admin/shifts'
+      preLoaderRoute: typeof AuthenticatedAdminShiftsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/rooms': {
+      id: '/_authenticated/admin/rooms'
+      path: '/rooms'
+      fullPath: '/admin/rooms'
+      preLoaderRoute: typeof AuthenticatedAdminRoomsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/reports': {
+      id: '/_authenticated/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AuthenticatedAdminReportsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/facilities': {
+      id: '/_authenticated/admin/facilities'
+      path: '/facilities'
+      fullPath: '/admin/facilities'
+      preLoaderRoute: typeof AuthenticatedAdminFacilitiesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/rooms/print': {
+      id: '/_authenticated/admin/rooms/print'
+      path: '/print'
+      fullPath: '/admin/rooms/print'
+      preLoaderRoute: typeof AuthenticatedAdminRoomsPrintRouteImport
+      parentRoute: typeof AuthenticatedAdminRoomsRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRoomsRouteChildren {
+  AuthenticatedAdminRoomsPrintRoute: typeof AuthenticatedAdminRoomsPrintRoute
+}
+
+const AuthenticatedAdminRoomsRouteChildren: AuthenticatedAdminRoomsRouteChildren =
+  {
+    AuthenticatedAdminRoomsPrintRoute: AuthenticatedAdminRoomsPrintRoute,
+  }
+
+const AuthenticatedAdminRoomsRouteWithChildren =
+  AuthenticatedAdminRoomsRoute._addFileChildren(
+    AuthenticatedAdminRoomsRouteChildren,
+  )
+
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminFacilitiesRoute: typeof AuthenticatedAdminFacilitiesRoute
+  AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
+  AuthenticatedAdminRoomsRoute: typeof AuthenticatedAdminRoomsRouteWithChildren
+  AuthenticatedAdminShiftsRoute: typeof AuthenticatedAdminShiftsRoute
+  AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminFacilitiesRoute: AuthenticatedAdminFacilitiesRoute,
+  AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
+  AuthenticatedAdminRoomsRoute: AuthenticatedAdminRoomsRouteWithChildren,
+  AuthenticatedAdminShiftsRoute: AuthenticatedAdminShiftsRoute,
+  AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedStaffRoute: typeof AuthenticatedStaffRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedStaffRoute: AuthenticatedStaffRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
