@@ -64,6 +64,41 @@ export type Database = {
           },
         ]
       }
+      pcc_task_links: {
+        Row: {
+          created_at: string
+          id: string
+          pcc_patient_id: string | null
+          pcc_task_id: string | null
+          room_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pcc_patient_id?: string | null
+          pcc_task_id?: string | null
+          room_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pcc_patient_id?: string | null
+          pcc_task_id?: string | null
+          room_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pcc_task_links_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: true
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active: boolean
