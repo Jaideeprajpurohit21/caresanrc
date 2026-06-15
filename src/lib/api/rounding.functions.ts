@@ -163,18 +163,37 @@ export const createStaff = createServerFn({ method: "POST" })
     }).parse(d))
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
+    const email = data.email.trim().toLowerCase();
+    const password = data.password.trim();
+    const fullName = data.full_name.trim();
+    const employeeId = data.employee_id?.trim() || null;
+    if (password.length < 8) throw new Error("Password must be at least 8 characters");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: created, error: cErr } = await supabaseAdmin.auth.admin.createUser({
-      email: data.email,
-      password: data.password,
+      email,
+      password,
       email_confirm: true,
-      user_metadata: { full_name: data.full_name },
+      user_metadata: { full_name: fullName },
     });
-    if (cErr) throw new Error(cErr.message);
-    const uid = created.user!.id;
+    let uid = created.user?.id;
+    if (cErr) {
+      if (!/already|registered|exists/i.test(cErr.message)) throw new Error(cErr.message);
+      const { data: userList, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (listErr) throw new Error(listErr.message);
+      const existing = userList.users.find((u) => u.email?.toLowerCase() === email);
+      if (!existing) throw new Error("Account already exists. Use Reset password for this staff member.");
+      const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: fullName },
+      });
+      if (updateErr) throw new Error(updateErr.message);
+      uid = existing.id;
+    }
+    if (!uid) throw new Error("Could not create staff account");
     // ensure profile (trigger creates it but make sure employee_id is set)
     await supabaseAdmin.from("profiles").upsert({
-      id: uid, full_name: data.full_name, employee_id: data.employee_id ?? null, email: data.email, active: true,
+      id: uid, full_name: fullName, employee_id: employeeId, email, active: true,
     });
     await supabaseAdmin.from("user_roles").upsert({ user_id: uid, role: data.role });
     return { ok: true, id: uid };
@@ -197,8 +216,10 @@ export const resetStaffPassword = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid(), password: z.string().min(8).max(72) }).parse(d))
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
+    const password = data.password.trim();
+    if (password.length < 8) throw new Error("Password must be at least 8 characters");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, { password: data.password });
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, { password, email_confirm: true });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
