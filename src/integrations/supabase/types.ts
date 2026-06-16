@@ -273,6 +273,7 @@ export type Database = {
           device_label: string | null
           floor_id: string
           id: string
+          input_method: string
           late_minutes: number
           room_id: string
           round_index: number
@@ -286,6 +287,7 @@ export type Database = {
           device_label?: string | null
           floor_id: string
           id?: string
+          input_method?: string
           late_minutes?: number
           room_id: string
           round_index: number
@@ -299,6 +301,7 @@ export type Database = {
           device_label?: string | null
           floor_id?: string
           id?: string
+          input_method?: string
           late_minutes?: number
           room_id?: string
           round_index?: number
@@ -403,6 +406,14 @@ export type Database = {
       submit_round_scan:
         | { Args: { p_qr_token: string }; Returns: Json }
         | { Args: { p_dry_run?: boolean; p_qr_token: string }; Returns: Json }
+        | {
+            Args: {
+              p_dry_run?: boolean
+              p_input_method?: string
+              p_qr_token: string
+            }
+            Returns: Json
+          }
     }
     Enums: {
       app_role: "admin" | "staff"

@@ -273,12 +273,19 @@ export const resetStaffPassword = createServerFn({ method: "POST" })
 // ---------- ANTI-CHEAT SCAN ----------
 export const submitRoundScan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { qr_token: string }) =>
-    z.object({ qr_token: z.string().min(1).max(200) }).parse(d))
+  .inputValidator((d: { qr_token: string; input_method?: "qr" | "nfc" }) =>
+    z.object({
+      qr_token: z.string().min(1).max(200),
+      input_method: z.enum(["qr", "nfc"]).optional(),
+    }).parse(d))
   .handler(async ({ data, context }) => {
     const match = data.qr_token.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
     const token = match ? match[1] : data.qr_token;
-    const { data: result, error } = await context.supabase.rpc("submit_round_scan", { p_qr_token: token });
+    const method = data.input_method ?? "qr";
+    const { data: result, error } = await context.supabase.rpc("submit_round_scan", {
+      p_qr_token: token,
+      p_input_method: method,
+    });
     if (error) throw new Error(error.message);
     const r = result as any;
     if (r && r.ok === false) {
@@ -299,6 +306,7 @@ export const submitRoundScan = createServerFn({ method: "POST" })
       dry_run?: boolean;
     };
   });
+
 
 // Admin-only dry-run scan: never writes to scan_logs.
 export const submitRoundScanDryRun = createServerFn({ method: "POST" })

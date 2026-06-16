@@ -2,19 +2,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Camera } from "lucide-react";
+import { Camera, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getMyStaffHome, submitRoundScan } from "@/lib/api/rounding.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { RoomScanner, ScanResultCard, type ScanResult } from "@/components/RoomScanner";
+import { NfcCheckIn, isNfcSupported } from "@/components/NfcCheckIn";
 
 export const Route = createFileRoute("/_authenticated/staff")({
+  ssr: false,
   head: () => ({ meta: [{ title: "My Rounds — POC Rounding Portal" }] }),
   component: StaffPage,
 });
 
-// Auto sign-out after this many hours of being signed in (covers longest shift).
 const SESSION_MAX_HOURS = 12;
 const SIGN_IN_KEY = "staff_signed_in_at";
 
@@ -29,9 +30,10 @@ function StaffPage() {
   const getHome = useServerFn(getMyStaffHome);
   const scan = useServerFn(submitRoundScan);
   const qc = useQueryClient();
-  const [scanning, setScanning] = useState(false);
+  const [checkInOpen, setCheckInOpen] = useState(false);
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const signedOutRef = useRef(false);
+  const nfc = isNfcSupported();
 
   const { data } = useSuspenseQuery({
     queryKey: ["my-staff-home"],
@@ -40,7 +42,6 @@ function StaffPage() {
     refetchOnWindowFocus: true,
   });
 
-  // Session-length auto sign-out.
   useEffect(() => {
     if (typeof window === "undefined") return;
     let startedAt = Number(sessionStorage.getItem(SIGN_IN_KEY));
@@ -64,7 +65,7 @@ function StaffPage() {
   }, []);
 
   const mutate = useMutation({
-    mutationFn: (qr_token: string) => scan({ data: { qr_token } }),
+    mutationFn: (vars: { qr_token: string; input_method: "qr" | "nfc" }) => scan({ data: vars }),
     onSuccess: async (res: any) => {
       setLastResult(res);
       qc.invalidateQueries({ queryKey: ["my-staff-home"] });
@@ -89,16 +90,28 @@ function StaffPage() {
     },
   });
 
-  if (scanning) {
+  if (checkInOpen) {
+    if (nfc) {
+      return (
+        <NfcCheckIn
+          busy={mutate.isPending}
+          onClose={() => setCheckInOpen(false)}
+          onToken={(token) => {
+            setCheckInOpen(false);
+            mutate.mutate({ qr_token: token, input_method: "nfc" });
+          }}
+        />
+      );
+    }
     return (
       <RoomScanner
         lastResult={lastResult}
         onScan={(token) => {
           if (mutate.isPending) return;
-          setScanning(false);
-          mutate.mutate(token);
+          setCheckInOpen(false);
+          mutate.mutate({ qr_token: token, input_method: "qr" });
         }}
-        onClose={() => setScanning(false)}
+        onClose={() => setCheckInOpen(false)}
       />
     );
   }
@@ -122,8 +135,12 @@ function StaffPage() {
         </p>
       </div>
 
-      <Button size="lg" className="w-full h-16 text-base" onClick={() => setScanning(true)}>
-        <Camera className="h-6 w-6 mr-2" /> Scan QR code
+      <Button size="lg" className="w-full h-16 text-base" onClick={() => setCheckInOpen(true)}>
+        {nfc ? (
+          <><Smartphone className="h-6 w-6 mr-2" /> Tap to check in</>
+        ) : (
+          <><Camera className="h-6 w-6 mr-2" /> Scan QR code</>
+        )}
       </Button>
     </div>
   );
