@@ -24,6 +24,8 @@ import { Route as AuthenticatedAdminLiveRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminIntegrationsRouteImport } from './routes/_authenticated.admin.integrations'
 import { Route as AuthenticatedAdminFacilitiesRouteImport } from './routes/_authenticated.admin.facilities'
 import { Route as AuthenticatedAdminRoomsPrintRouteImport } from './routes/_authenticated.admin.rooms.print'
+import { Route as AuthenticatedAdminRoomsLabelsRouteImport } from './routes/_authenticated.admin.rooms.labels'
+import { Route as AuthenticatedAdminRoomsRoomIdLabelRouteImport } from './routes/_authenticated.admin.rooms.$roomId.label'
 
 const ScanRoute = ScanRouteImport.update({
   id: '/scan',
@@ -104,6 +106,18 @@ const AuthenticatedAdminRoomsPrintRoute =
     path: '/print',
     getParentRoute: () => AuthenticatedAdminRoomsRoute,
   } as any)
+const AuthenticatedAdminRoomsLabelsRoute =
+  AuthenticatedAdminRoomsLabelsRouteImport.update({
+    id: '/labels',
+    path: '/labels',
+    getParentRoute: () => AuthenticatedAdminRoomsRoute,
+  } as any)
+const AuthenticatedAdminRoomsRoomIdLabelRoute =
+  AuthenticatedAdminRoomsRoomIdLabelRouteImport.update({
+    id: '/$roomId/label',
+    path: '/$roomId/label',
+    getParentRoute: () => AuthenticatedAdminRoomsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -119,7 +133,9 @@ export interface FileRoutesByFullPath {
   '/admin/schedule': typeof AuthenticatedAdminScheduleRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/rooms/labels': typeof AuthenticatedAdminRoomsLabelsRoute
   '/admin/rooms/print': typeof AuthenticatedAdminRoomsPrintRoute
+  '/admin/rooms/$roomId/label': typeof AuthenticatedAdminRoomsRoomIdLabelRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -134,7 +150,9 @@ export interface FileRoutesByTo {
   '/admin/schedule': typeof AuthenticatedAdminScheduleRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/rooms/labels': typeof AuthenticatedAdminRoomsLabelsRoute
   '/admin/rooms/print': typeof AuthenticatedAdminRoomsPrintRoute
+  '/admin/rooms/$roomId/label': typeof AuthenticatedAdminRoomsRoomIdLabelRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -152,7 +170,9 @@ export interface FileRoutesById {
   '/_authenticated/admin/schedule': typeof AuthenticatedAdminScheduleRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/rooms/labels': typeof AuthenticatedAdminRoomsLabelsRoute
   '/_authenticated/admin/rooms/print': typeof AuthenticatedAdminRoomsPrintRoute
+  '/_authenticated/admin/rooms/$roomId/label': typeof AuthenticatedAdminRoomsRoomIdLabelRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -170,7 +190,9 @@ export interface FileRouteTypes {
     | '/admin/schedule'
     | '/admin/staff'
     | '/admin/'
+    | '/admin/rooms/labels'
     | '/admin/rooms/print'
+    | '/admin/rooms/$roomId/label'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -185,7 +207,9 @@ export interface FileRouteTypes {
     | '/admin/schedule'
     | '/admin/staff'
     | '/admin'
+    | '/admin/rooms/labels'
     | '/admin/rooms/print'
+    | '/admin/rooms/$roomId/label'
   id:
     | '__root__'
     | '/'
@@ -202,7 +226,9 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/schedule'
     | '/_authenticated/admin/staff'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/rooms/labels'
     | '/_authenticated/admin/rooms/print'
+    | '/_authenticated/admin/rooms/$roomId/label'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -319,16 +345,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRoomsPrintRouteImport
       parentRoute: typeof AuthenticatedAdminRoomsRoute
     }
+    '/_authenticated/admin/rooms/labels': {
+      id: '/_authenticated/admin/rooms/labels'
+      path: '/labels'
+      fullPath: '/admin/rooms/labels'
+      preLoaderRoute: typeof AuthenticatedAdminRoomsLabelsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoomsRoute
+    }
+    '/_authenticated/admin/rooms/$roomId/label': {
+      id: '/_authenticated/admin/rooms/$roomId/label'
+      path: '/$roomId/label'
+      fullPath: '/admin/rooms/$roomId/label'
+      preLoaderRoute: typeof AuthenticatedAdminRoomsRoomIdLabelRouteImport
+      parentRoute: typeof AuthenticatedAdminRoomsRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRoomsRouteChildren {
+  AuthenticatedAdminRoomsLabelsRoute: typeof AuthenticatedAdminRoomsLabelsRoute
   AuthenticatedAdminRoomsPrintRoute: typeof AuthenticatedAdminRoomsPrintRoute
+  AuthenticatedAdminRoomsRoomIdLabelRoute: typeof AuthenticatedAdminRoomsRoomIdLabelRoute
 }
 
 const AuthenticatedAdminRoomsRouteChildren: AuthenticatedAdminRoomsRouteChildren =
   {
+    AuthenticatedAdminRoomsLabelsRoute: AuthenticatedAdminRoomsLabelsRoute,
     AuthenticatedAdminRoomsPrintRoute: AuthenticatedAdminRoomsPrintRoute,
+    AuthenticatedAdminRoomsRoomIdLabelRoute:
+      AuthenticatedAdminRoomsRoomIdLabelRoute,
   }
 
 const AuthenticatedAdminRoomsRouteWithChildren =
