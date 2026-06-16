@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { submitRoundScan } from "@/lib/api/rounding.functions";
 import { RoomScanner, ScanResultCard, type ScanResult } from "@/components/RoomScanner";
+import { NfcCheckIn, isNfcSupported } from "@/components/NfcCheckIn";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -20,6 +21,7 @@ function ScanPage() {
   const [ready, setReady] = useState(false);
   const [scanning, setScanning] = useState(true);
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
+  const nfc = isNfcSupported();
 
   useEffect(() => {
     let active = true;
@@ -35,7 +37,7 @@ function ScanPage() {
   }, [navigate]);
 
   const mutate = useMutation({
-    mutationFn: (qr_token: string) => scan({ data: { qr_token } }),
+    mutationFn: (vars: { qr_token: string; input_method: "qr" | "nfc" }) => scan({ data: vars }),
     onSuccess: async (res: any) => {
       setLastResult(res);
       setScanning(false);
@@ -52,12 +54,21 @@ function ScanPage() {
   if (!ready) return null;
 
   if (scanning) {
+    if (nfc) {
+      return (
+        <NfcCheckIn
+          busy={mutate.isPending}
+          onClose={() => setScanning(false)}
+          onToken={(token) => mutate.mutate({ qr_token: token, input_method: "nfc" })}
+        />
+      );
+    }
     return (
       <RoomScanner
         lastResult={lastResult}
         onScan={(token) => {
           if (mutate.isPending) return;
-          mutate.mutate(token);
+          mutate.mutate({ qr_token: token, input_method: "qr" });
         }}
         onClose={() => setScanning(false)}
       />
@@ -67,7 +78,9 @@ function ScanPage() {
   return (
     <div className="mx-auto max-w-md p-4 space-y-3 min-h-screen">
       {lastResult && <ScanResultCard result={lastResult} onDismiss={() => setLastResult(null)} />}
-      <Button className="w-full" onClick={() => setScanning(true)}>Scan another</Button>
+      <Button className="w-full" onClick={() => setScanning(true)}>
+        {nfc ? "Tap another" : "Scan another"}
+      </Button>
     </div>
   );
 }
