@@ -280,7 +280,14 @@ export const submitRoundScan = createServerFn({ method: "POST" })
     const token = match ? match[1] : data.qr_token;
     const { data: result, error } = await context.supabase.rpc("submit_round_scan", { p_qr_token: token });
     if (error) throw new Error(error.message);
-    return result as {
+    const r = result as any;
+    if (r && r.ok === false) {
+      await logScanError({
+        userId: context.userId, token, room_id: null,
+        code: r.code, title: r.title, message: r.message, dry_run: false,
+      });
+    }
+    return r as {
       ok: boolean;
       code: string;
       title: string;
@@ -307,8 +314,89 @@ export const submitRoundScanDryRun = createServerFn({ method: "POST" })
       p_dry_run: true,
     });
     if (error) throw new Error(error.message);
-    return result as Record<string, any>;
+    const r = result as any;
+    if (r && r.ok === false) {
+      await logScanError({
+        userId: context.userId, token, room_id: null,
+        code: r.code, title: r.title, message: r.message, dry_run: true,
+      });
+    }
+    return r as Record<string, any>;
   });
+
+// Fire-and-forget error logger; never blocks the scan response.
+async function logScanError(opts: {
+  userId: string;
+  token: string;
+  room_id: string | null;
+  code: string;
+  title?: string;
+  message?: string;
+  dry_run: boolean;
+}) {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("scan_error_logs").insert({
+      user_id: opts.userId,
+      qr_token: opts.token,
+      room_id: opts.room_id,
+      code: opts.code,
+      title: opts.title ?? null,
+      message: opts.message ?? null,
+      dry_run: opts.dry_run,
+    });
+  } catch (e) {
+    console.error("logScanError failed:", e);
+  }
+}
+
+// Admin: failure counts by code and recent error rows.
+export const getScanErrorSummary = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { hours?: number; include_dry_run?: boolean }) =>
+    z.object({
+      hours: z.number().int().min(1).max(24 * 30).optional(),
+      include_dry_run: z.boolean().optional(),
+    }).parse(d))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const hours = data.hours ?? 24;
+    const since = new Date(Date.now() - hours * 3600 * 1000).toISOString();
+    let q = context.supabase
+      .from("scan_error_logs")
+      .select("code, dry_run, created_at")
+      .gte("created_at", since);
+    if (!data.include_dry_run) q = q.eq("dry_run", false);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    const counts = new Map<string, number>();
+    for (const r of rows ?? []) counts.set(r.code, (counts.get(r.code) ?? 0) + 1);
+    const by_code = Array.from(counts.entries())
+      .map(([code, count]) => ({ code, count }))
+      .sort((a, b) => b.count - a.count);
+    return { hours, total: rows?.length ?? 0, by_code };
+  });
+
+export const listRecentScanErrors = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { limit?: number; include_dry_run?: boolean }) =>
+    z.object({
+      limit: z.number().int().min(1).max(500).optional(),
+      include_dry_run: z.boolean().optional(),
+    }).parse(d))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    let q = context.supabase
+      .from("scan_error_logs")
+      .select("id, created_at, code, title, message, dry_run, user_id, qr_token, profiles:user_id(full_name,email)")
+      .order("created_at", { ascending: false })
+      .limit(data.limit ?? 50);
+    if (!data.include_dry_run) q = q.eq("dry_run", false);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
 
 // ---------- READS for UI ----------
 export const getFloorStatus = createServerFn({ method: "POST" })
