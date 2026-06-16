@@ -1,93 +1,65 @@
-## Goal
 
-Adapt the existing app to the master prompt's anti-cheat model while keeping:
-- TanStack `createServerFn` as the only client→server boundary (no direct `supabase.rpc` from the browser, no Edge Functions).
-- `user_roles` table + `has_role()` for admin checks (NOT `role` on `profiles`).
-- Existing `facilities` / `floors` / `rooms` / `profiles` / `scan_logs` tables, modified rather than dropped.
+## Scope
 
-## Schema migration
+Three refinements to the existing rooms/scan flow. No schema changes — `rooms.qr_token` default already exists, and the success message change is a one-line edit inside `submit_round_scan`.
 
-### Drop / replace
-- Drop `units` (the spec has facility → floors → rooms; no units).
-- Drop `shifts`, `shift_assignments`, `rounding_tasks` (tasks are now computed, not stored).
-- Drop existing `scan_logs` (column shape changes; current data is test data).
+## 1. Inline QR on the Rooms list (`src/routes/_authenticated.admin.rooms.tsx`)
 
-### Modify
-- `facilities`: add `timezone text not null default 'America/Chicago'`.
-- `floors`: drop `unit_id`, add `facility_id uuid not null references facilities`; keep `name`; add `unique (facility_id, name)`.
-- `rooms`: ensure shape is `(id, floor_id, room_number, qr_token unique, active, created_at)`. Drop legacy cols.
-- `profiles`: add `employee_id text unique`, `floor_id uuid references floors`, `active boolean default true`. Do NOT add a `role` column — roles stay in `user_roles`.
+Currently each room row shows only its number + facility/floor + delete button. After bulk-add, the admin has to navigate to `/admin/rooms/print` to see codes.
 
-### Create
-- `round_schedules` (per spec).
-- New `scan_logs` per spec, with the `unique (room_id, schedule_id, scheduled_for)` constraint.
-- All GRANTs + RLS per spec, BUT rewrite admin policies to use `public.has_role(auth.uid(),'admin')` instead of `(select role from profiles ...)`. Admin facility-scoping uses `(select facility_id from profiles where id = auth.uid())`.
+- Render a small QR thumbnail (≈80px) inside each row, using `qrcode` (already installed, used by the print page) drawn into a canvas via `useEffect`.
+- Extract the existing `QRCard`-style canvas drawing into a reusable `<RoomQR token size />` component in `src/components/RoomQR.tsx` so both the list row and the print pages share it.
+- Add a per-row "Print door label" link → `/admin/rooms/$roomId/label`.
 
-### Functions
-- `submit_round_scan(p_qr_token text) returns jsonb` — verbatim from spec.
-- `get_floor_status(p_floor_id uuid)` — verbatim from spec.
-- `get_round_report(p_floor_id, p_from, p_to)` — implement the real body (anchor + `generate_series` across the range + left join `scan_logs`), not the stub.
-- All `security definer`, `grant execute ... to authenticated`, `revoke from public`.
+Result: creating a room (single or bulk) immediately shows its QR in the list — no extra step.
 
-## Server functions (TanStack)
+## 2. Door-label print layouts
 
-Rewrite `src/lib/api/rounding.functions.ts` to expose the new model. All call the Postgres RPCs via the authenticated supabase client from `requireSupabaseAuth`:
+Two new routes, both using the same `<DoorLabel room />` component:
 
-- `submitRoundScan({ qr_token })` → `supabase.rpc('submit_round_scan', { p_qr_token })`. Returns the JSON verbatim.
-- `getFloorStatus({ floor_id })` → `rpc('get_floor_status', ...)`.
-- `getRoundReport({ floor_id, from, to })` → `rpc('get_round_report', ...)`.
-- `getMe()` — keep, returns profile + `isAdmin` (from `has_role`) + assigned `floor_id`.
-- Admin CRUD: `listFacilities/createFacility`, `listFloors/createFloor`, `listRooms/createRoom/regenerateRoomQr/setRoomActive`, `getSchedule/upsertSchedule`, `listStaff/createStaff/resetStaffPassword/setStaffActive`.
-  - `createStaff` / `resetStaffPassword` / `setStaffActive` are privileged: `requireSupabaseAuth` + `has_role` admin check, then `await import('@/integrations/supabase/client.server')` for `supabaseAdmin`. They generate a temp password and return it once.
+- `src/routes/_authenticated.admin.rooms.$roomId.label.tsx` — single room, one label per page.
+- `src/routes/_authenticated.admin.rooms.labels.tsx` — bulk, one label per page for every room (optional `?floor_id=` filter via search param if easy; otherwise all rooms).
 
-Delete obsolete server fns (units, shifts, shift_assignments, rounding_tasks generator, `getMyTasksToday`, `scanRoomQr` — replaced by `submitRoundScan`).
+Add a "Print door labels" button to the rooms page header, next to the existing "Print all QR codes".
 
-## Frontend
+### Label layout (`src/components/DoorLabel.tsx`)
 
-### Staff (`/staff`)
-Rewrite `src/routes/_authenticated.staff.tsx` to be scan-only per Section 7:
-- Header: caregiver name + shift name only.
-- Status list from `get_floor_status`, mapped to "Pending" / "Done" / "Missed" — no times.
-- One big "Scan QR code" button → opens `@yudiel/react-qr-scanner` full-screen.
-- On decode → call `submitRoundScan`; render `data.title` / `data.message` based on `code`.
-- Camera-denied fallback message (verbatim from spec); no alternative input.
-- Poll `getFloorStatus` every 60s + on focus; if all rounds completed/overdue OR scan returns `off_shift` → `supabase.auth.signOut()` + redirect to `/auth` with the spec's message.
-- Realtime: subscribe to `scan_logs` INSERT filtered by `floor_id`, refetch on event.
+- CSS `@page { size: 4in 6in; margin: 0.25in }` scoped via a print stylesheet block on the label page only (so it doesn't affect the QR-sheet page).
+- `break-after: page` between labels for the bulk version.
+- Content, centered:
+  - "Room {room_number}" — large bold (≈48pt).
+  - QR canvas at ≈2in square (width ~190px at 96dpi, rendered with `QRCode.toCanvas({ width: 384 })` for crisp scaling).
+  - Small caption: "Scan to check in".
+- No facility name, no branding, no employee/scheduling info.
+- Screen preview mirrors the print layout inside a bordered card so admins see what will print; a "Print" button calls `window.print()`.
 
-### Admin
-- `/admin` (index): dashboard — stat cards from `get_round_report` for today + overdue rooms from `get_floor_status`. Replace current server-fn data source.
-- `/admin/facilities`: keep, but remove the Units layer (Facility → Floors → Rooms only).
-- `/admin/rooms` + `/admin/rooms/print`: keep, ensure QR token rendering still works against the new `rooms` shape.
-- `/admin/shifts` → rename concept to **Schedule** (per floor); single form for `round_schedules`. Repurpose existing file.
-- `/admin/staff`: CRUD using new server fns; show temp password modal on create/reset.
-- `/admin/reports`: filters (floor, room, employee, status, date range) over `getRoundReport`; CSV (built-in), Excel (`xlsx`), PDF (`jspdf`) export. Install `xlsx` and `jspdf` if not present.
-- Live Floor Status: new page `/admin/live` consuming `get_floor_status` with realtime + color-coded grid.
+The existing `/admin/rooms/print` grid stays as-is (it's the bulk "QR sheet" admin reference, not door labels).
 
-`AppShell` nav updated: Dashboard / Facilities / Rooms & QR / Schedule / Staff / Live / Reports.
+## 3. Success message wording
 
-## Acceptance tests (Section 11)
+Migration updating only the success branch of `public.submit_round_scan` (everything else byte-identical to the current function):
 
-After implementation, run via SQL editor / direct RPC calls:
-1–7: scan-engine behavior (unknown, completed, already_done, parallel rooms, not_due, expired, across-midnight). I'll run these via `psql` / `supabase--read_query`.
-8: `get_floor_status` row shape.
-9: RLS — confirm staff cannot select other users' scan_logs and direct INSERT denied; `submit_round_scan` still works (security definer).
-10: visual check of staff UI.
-11: auto sign-out at end of shift (manual via preview).
-12: report exports (manual).
+- `title` → `"You're checked in!"`
+- `message` → `'You checked in to Room '||v_room.room_number||'. Thank you for checking in.'`
 
-## Risks / known deviations
+All other branches (`already_done`, `not_due`, `expired`, `unknown_qr`, `off_shift`, `no_schedule`, `not_authenticated`) untouched.
 
-- The spec's RLS uses `(select role from profiles ...)`. I'm substituting `public.has_role(auth.uid(),'admin')` because that's the safer pattern already established. Functionally equivalent for admin gating.
-- Dropping `units`, `shifts`, `shift_assignments`, `rounding_tasks` is irreversible. Existing test scan data lost.
-- Auth signup must remain disabled; admins create staff via the privileged server fn.
-- The current `_authenticated/route.tsx` gate stays; admin-only routes will additionally check `has_role` in their server fn (UI gates by `isAdmin` from `getMe`).
+### Staff UI (`src/components/RoomScanner.tsx` → `ScanResultCard`)
 
-## Execution order
+Already renders only `title` + `message` (no timestamp / late-minutes / next-round) — the SQL change alone delivers the spec. The check icon is already shown for `ok` results. No component changes needed, but I'll verify by reading the rendered output once built.
 
-1. Migration (schema + RPCs + RLS + seed).
-2. Rewrite `rounding.functions.ts`.
-3. Rewrite Staff route.
-4. Rewrite Admin routes + AppShell nav.
-5. Run acceptance tests; fix issues.
+## Files
 
-Approve and I'll start with the migration.
+- new: `src/components/RoomQR.tsx`
+- new: `src/components/DoorLabel.tsx`
+- new: `src/routes/_authenticated.admin.rooms.$roomId.label.tsx`
+- new: `src/routes/_authenticated.admin.rooms.labels.tsx`
+- new: migration `update_submit_round_scan_success_message.sql`
+- edit: `src/routes/_authenticated.admin.rooms.tsx` (inline QR, per-row label link, header button)
+
+## Out of scope (unchanged)
+
+- `rooms.qr_token` schema/default — already correct.
+- Existing `/admin/rooms/print` bulk QR sheet — kept as-is.
+- All other scan-result branches and the anti-cheat logic.
+- PCC sync, deep-link `/scan` flow, session expiry.

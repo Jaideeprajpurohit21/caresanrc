@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Printer, Trash2 } from "lucide-react";
+import { Printer, Trash2, Tag } from "lucide-react";
+import { RoomQR } from "@/components/RoomQR";
+
 
 export const Route = createFileRoute("/_authenticated/admin/rooms")({
   head: () => ({ meta: [{ title: "Rooms & QR codes — Admin" }] }),
@@ -48,9 +50,12 @@ function Page() {
 
   return (
     <div className="mx-auto max-w-5xl p-4 space-y-4">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 items-end">
+      <div className="flex flex-wrap gap-3 items-end justify-between">
         <h1 className="text-2xl font-bold">Rooms & QR codes</h1>
-        <Link to="/admin/rooms/print"><Button variant="outline"><Printer className="h-4 w-4 mr-2" /> Print all QR codes</Button></Link>
+        <div className="flex gap-2 flex-wrap">
+          <Link to="/admin/rooms/labels"><Button variant="outline"><Tag className="h-4 w-4 mr-2" /> Print door labels</Button></Link>
+          <Link to="/admin/rooms/print"><Button variant="outline"><Printer className="h-4 w-4 mr-2" /> Print QR sheet</Button></Link>
+        </div>
       </div>
 
       <Card>
@@ -72,11 +77,15 @@ function Page() {
         <CardContent>
           <ul className="divide-y">
             {(rooms ?? []).map((r: any) => (
-              <li key={r.id} className="py-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+              <li key={r.id} className="py-3 grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3">
+                <RoomQR token={r.qr_token} size={72} />
                 <div className="min-w-0">
                   <div className="font-medium">Room {r.room_number}</div>
                   <div className="text-xs text-muted-foreground truncate">{r.floors?.facilities?.name} · {r.floors?.name}</div>
                 </div>
+                <Link to="/admin/rooms/$roomId/label" params={{ roomId: r.id }}>
+                  <Button variant="outline" size="sm"><Tag className="h-4 w-4 mr-1" /> Door label</Button>
+                </Link>
                 <Button variant="ghost" size="icon" onClick={() => removeRoom.mutate(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
               </li>
             ))}
