@@ -276,7 +276,6 @@ export const submitRoundScan = createServerFn({ method: "POST" })
   .inputValidator((d: { qr_token: string }) =>
     z.object({ qr_token: z.string().min(1).max(200) }).parse(d))
   .handler(async ({ data, context }) => {
-    // Accept either bare uuid or rounding://room/<uuid>
     const match = data.qr_token.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
     const token = match ? match[1] : data.qr_token;
     const { data: result, error } = await context.supabase.rpc("submit_round_scan", { p_qr_token: token });
@@ -289,7 +288,26 @@ export const submitRoundScan = createServerFn({ method: "POST" })
       room_number?: string;
       round_index?: number;
       completed_at?: string;
+      next_window_starts?: string;
+      dry_run?: boolean;
     };
+  });
+
+// Admin-only dry-run scan: never writes to scan_logs.
+export const submitRoundScanDryRun = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qr_token: string }) =>
+    z.object({ qr_token: z.string().min(1).max(200) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const match = data.qr_token.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+    const token = match ? match[1] : data.qr_token;
+    const { data: result, error } = await context.supabase.rpc("submit_round_scan", {
+      p_qr_token: token,
+      p_dry_run: true,
+    });
+    if (error) throw new Error(error.message);
+    return result as Record<string, any>;
   });
 
 // ---------- READS for UI ----------

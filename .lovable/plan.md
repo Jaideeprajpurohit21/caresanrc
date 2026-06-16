@@ -1,65 +1,63 @@
+## 1. Fix silent scan failures
 
-## Scope
+**Root cause (confirmed):** `src/routes/_authenticated.staff.tsx` — the scan mutation's `onError` only fires a toast and never sets `lastResult`, so when the RPC throws (network/server error) the user sees nothing where the result card should be. There's also no in-between loading state between `setScanning(false)` and the result rendering.
 
-Three refinements to the existing rooms/scan flow. No schema changes — `rooms.qr_token` default already exists, and the success message change is a one-line edit inside `submit_round_scan`.
+**Changes in `_authenticated.staff.tsx`:**
+- In `onError`, set `lastResult` to a generic client-error result: `{ ok: false, code: 'client_error', title: "Something went wrong", message: "We couldn't reach the server. Check your connection and try again." }`.
+- Render a "Checking…" spinner block when `mutate.isPending` (above the result card, below `scanning`).
+- Keep camera-stops-on-decode behavior (already correct: `setScanning(false)` runs before mutate).
 
-## 1. Inline QR on the Rooms list (`src/routes/_authenticated.admin.rooms.tsx`)
+**`ScanResultCard`** already renders for both `ok: true` and `ok: false` — no change needed.
 
-Currently each room row shows only its number + facility/floor + delete button. After bulk-add, the admin has to navigate to `/admin/rooms/print` to see codes.
+## 2. Clarify round-opening times
 
-- Render a small QR thumbnail (≈80px) inside each row, using `qrcode` (already installed, used by the print page) drawn into a canvas via `useEffect`.
-- Extract the existing `QRCard`-style canvas drawing into a reusable `<RoomQR token size />` component in `src/components/RoomQR.tsx` so both the list row and the print pages share it.
-- Add a per-row "Print door label" link → `/admin/rooms/$roomId/label`.
+**2a. Schedule list (`_authenticated.admin.schedule.tsx`):** under each schedule row, compute and show the list of round-opening times client-side:
+- Parse `shift_start_time` ("HH:MM:SS") and `frequency` (interval string like `"02:00:00"` or `"2 hours"` — use a small parser returning minutes).
+- For `i = 1..rounds_per_shift`, compute `start + freq*i` minutes; format as `h:MM AM/PM` (wrap past 24h).
+- Render `Rounds open at: 12:00 AM, 2:00 AM, …`.
+- Change "Starts" label to "Shift starts (round 1 opens one frequency later)".
 
-Result: creating a room (single or bulk) immediately shows its QR in the list — no extra step.
+**2b. `submit_round_scan` migration:**
+- Add `v_next_slot` tracking in the existing loop.
+- Update `not_due` message to `'The next round for Room X opens at HH12:MI AM.'` and add `next_window_starts` field.
+- Update `expired` message to append `' Next round opens at HH12:MI AM.'` and add `next_window_starts`.
+- All other branches unchanged.
+- Staff UI continues to render only `title`/`message` — `next_window_starts` is not surfaced (already true of `ScanResultCard`).
 
-## 2. Door-label print layouts
+## 3. Admin dry-run diagnostic
 
-Two new routes, both using the same `<DoorLabel room />` component:
+**3a. Migration — add `p_dry_run boolean default false` to `submit_round_scan`:**
+- Wrap `INSERT INTO scan_logs` with `IF NOT p_dry_run THEN ... END IF`.
+- Add `'dry_run', p_dry_run` to every return jsonb (success + all rejection branches).
+- Signature change is backward-compatible — existing one-arg calls keep working.
 
-- `src/routes/_authenticated.admin.rooms.$roomId.label.tsx` — single room, one label per page.
-- `src/routes/_authenticated.admin.rooms.labels.tsx` — bulk, one label per page for every room (optional `?floor_id=` filter via search param if easy; otherwise all rooms).
+**3b. Server fn:** add `submitRoundScanDryRun` in `src/lib/api/rounding.functions.ts` — admin-only (`ensureAdmin`), takes `{ qr_token }`, calls RPC with `p_dry_run: true`.
 
-Add a "Print door labels" button to the rooms page header, next to the existing "Print all QR codes".
+**3c. New route `src/routes/_authenticated.admin.diagnostics.tsx`:**
+- Room dropdown (from `listRooms`, display `Room {room_number}` / value `qr_token`).
+- Big "Run test scan (no data changes)" button + prominent note: "This does not check anyone in and does not affect reports."
+- Result panel shows: title, message, raw `code`, formatted `next_window_starts` (when present), and one-line explanation keyed by `code` per spec (off_shift / no_schedule / not_due / completed / already_done / expired).
+- Add link from rooms page + AppShell admin nav.
 
-### Label layout (`src/components/DoorLabel.tsx`)
+## 4. QR download
 
-- CSS `@page { size: 4in 6in; margin: 0.25in }` scoped via a print stylesheet block on the label page only (so it doesn't affect the QR-sheet page).
-- `break-after: page` between labels for the bulk version.
-- Content, centered:
-  - "Room {room_number}" — large bold (≈48pt).
-  - QR canvas at ≈2in square (width ~190px at 96dpi, rendered with `QRCode.toCanvas({ width: 384 })` for crisp scaling).
-  - Small caption: "Scan to check in".
-- No facility name, no branding, no employee/scheduling info.
-- Screen preview mirrors the print layout inside a bordered card so admins see what will print; a "Print" button calls `window.print()`.
+**Per-room download** in `_authenticated.admin.rooms.tsx`:
+- Add a "Download" button next to "Door label" per row.
+- Render a hidden full-size canvas via `QRCode.toCanvas` (e.g., 512px) on click, then `canvas.toBlob` → trigger download as `room-{room_number}-qr.png`. Implement as a `downloadRoomQr(token, roomNumber)` helper.
 
-The existing `/admin/rooms/print` grid stays as-is (it's the bulk "QR sheet" admin reference, not door labels).
-
-## 3. Success message wording
-
-Migration updating only the success branch of `public.submit_round_scan` (everything else byte-identical to the current function):
-
-- `title` → `"You're checked in!"`
-- `message` → `'You checked in to Room '||v_room.room_number||'. Thank you for checking in.'`
-
-All other branches (`already_done`, `not_due`, `expired`, `unknown_qr`, `off_shift`, `no_schedule`, `not_authenticated`) untouched.
-
-### Staff UI (`src/components/RoomScanner.tsx` → `ScanResultCard`)
-
-Already renders only `title` + `message` (no timestamp / late-minutes / next-round) — the SQL change alone delivers the spec. The check icon is already shown for `ok` results. No component changes needed, but I'll verify by reading the rendered output once built.
+**Bulk "Download all as ZIP":** add a top-bar button using `jszip` (already easy — small dep). For each room generate the PNG blob and add to zip, then save. Falls back gracefully if `jszip` import fails (skip bulk, keep per-room).
 
 ## Files
 
-- new: `src/components/RoomQR.tsx`
-- new: `src/components/DoorLabel.tsx`
-- new: `src/routes/_authenticated.admin.rooms.$roomId.label.tsx`
-- new: `src/routes/_authenticated.admin.rooms.labels.tsx`
-- new: migration `update_submit_round_scan_success_message.sql`
-- edit: `src/routes/_authenticated.admin.rooms.tsx` (inline QR, per-row label link, header button)
+- edit `src/routes/_authenticated.staff.tsx` (error handling + loading state)
+- edit `src/routes/_authenticated.admin.schedule.tsx` (round times list)
+- edit `src/routes/_authenticated.admin.rooms.tsx` (download buttons)
+- edit `src/lib/api/rounding.functions.ts` (admin dry-run server fn)
+- edit `src/components/AppShell.tsx` (Diagnostics nav link)
+- new `src/routes/_authenticated.admin.diagnostics.tsx`
+- new migration: `submit_round_scan` v2 with `p_dry_run` + `next_window_starts`
+- `bun add jszip` for bulk download
 
-## Out of scope (unchanged)
+## Out of scope
 
-- `rooms.qr_token` schema/default — already correct.
-- Existing `/admin/rooms/print` bulk QR sheet — kept as-is.
-- All other scan-result branches and the anti-cheat logic.
-- PCC sync, deep-link `/scan` flow, session expiry.
+Anti-cheat timing logic, staff success/rejection wording (other than the spec's `not_due`/`expired` time additions), PCC integration, scan_logs schema, all other routes.

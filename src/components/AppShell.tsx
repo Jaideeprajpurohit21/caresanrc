@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, LayoutDashboard, Building2, DoorOpen, Users, Clock, FileBarChart, ScanLine, Activity, Plug } from "lucide-react";
+import { LogOut, LayoutDashboard, Building2, DoorOpen, Users, Clock, FileBarChart, ScanLine, Activity, Plug, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
 
@@ -25,6 +25,7 @@ export function AppShell({
     { to: "/admin/live", label: "Live", Icon: Activity },
     { to: "/admin/reports", label: "Reports", Icon: FileBarChart },
     { to: "/admin/integrations", label: "Integrations", Icon: Plug },
+    { to: "/admin/diagnostics", label: "Diagnostics", Icon: Stethoscope },
   ] as const;
 
   return (

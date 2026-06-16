@@ -77,7 +77,16 @@ function StaffPage() {
         window.location.href = "/auth";
       }
     },
-    onError: (e: any) => toast.error(e?.message ?? "Scan failed"),
+    onError: (e: any) => {
+      console.error("submit_round_scan failed:", e);
+      setLastResult({
+        ok: false,
+        code: "client_error",
+        title: "Something went wrong",
+        message: "We couldn't reach the server. Check your connection and try again.",
+      });
+      toast.error(e?.message ?? "Scan failed");
+    },
   });
 
   if (scanning) {
@@ -96,7 +105,15 @@ function StaffPage() {
 
   return (
     <div className="mx-auto max-w-md p-4 space-y-4">
-      {lastResult && <ScanResultCard result={lastResult} onDismiss={() => setLastResult(null)} />}
+      {mutate.isPending && (
+        <div className="rounded-lg border p-4 flex items-center gap-3 bg-muted/30">
+          <div className="h-5 w-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <div className="text-sm">Checking…</div>
+        </div>
+      )}
+      {!mutate.isPending && lastResult && (
+        <ScanResultCard result={lastResult} onDismiss={() => setLastResult(null)} />
+      )}
 
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{greeting()}, {data.full_name || "there"}</h1>

@@ -8,8 +8,38 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Printer, Trash2, Tag } from "lucide-react";
+import { Printer, Trash2, Tag, Download, Archive } from "lucide-react";
 import { RoomQR } from "@/components/RoomQR";
+import QRCode from "qrcode";
+
+async function makeQrPngBlob(token: string): Promise<Blob> {
+  const canvas = document.createElement("canvas");
+  await QRCode.toCanvas(canvas, String(token), { width: 512, margin: 2 });
+  return await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/png"),
+  );
+}
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+async function downloadRoomQr(token: string, roomNumber: string) {
+  const blob = await makeQrPngBlob(token);
+  downloadBlob(blob, `room-${roomNumber}-qr.png`);
+}
+async function downloadAllAsZip(rooms: any[]) {
+  const { default: JSZip } = await import("jszip");
+  const zip = new JSZip();
+  for (const r of rooms) {
+    const blob = await makeQrPngBlob(r.qr_token);
+    zip.file(`room-${r.room_number}-qr.png`, blob);
+  }
+  const out = await zip.generateAsync({ type: "blob" });
+  downloadBlob(out, `room-qr-codes-${new Date().toISOString().slice(0, 10)}.zip`);
+}
 
 
 export const Route = createFileRoute("/_authenticated/admin/rooms")({
@@ -53,6 +83,13 @@ function Page() {
       <div className="flex flex-wrap gap-3 items-end justify-between">
         <h1 className="text-2xl font-bold">Rooms & QR codes</h1>
         <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            disabled={!(rooms ?? []).length}
+            onClick={() => downloadAllAsZip(rooms ?? []).catch((e) => toast.error(e?.message ?? "Download failed"))}
+          >
+            <Archive className="h-4 w-4 mr-2" /> Download all (ZIP)
+          </Button>
           <Link to="/admin/rooms/labels"><Button variant="outline"><Tag className="h-4 w-4 mr-2" /> Print door labels</Button></Link>
           <Link to="/admin/rooms/print"><Button variant="outline"><Printer className="h-4 w-4 mr-2" /> Print QR sheet</Button></Link>
         </div>
@@ -77,12 +114,19 @@ function Page() {
         <CardContent>
           <ul className="divide-y">
             {(rooms ?? []).map((r: any) => (
-              <li key={r.id} className="py-3 grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3">
+              <li key={r.id} className="py-3 grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] items-center gap-3">
                 <RoomQR token={r.qr_token} size={72} />
                 <div className="min-w-0">
                   <div className="font-medium">Room {r.room_number}</div>
                   <div className="text-xs text-muted-foreground truncate">{r.floors?.facilities?.name} · {r.floors?.name}</div>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadRoomQr(r.qr_token, r.room_number).catch((e) => toast.error(e?.message ?? "Download failed"))}
+                >
+                  <Download className="h-4 w-4 mr-1" /> Download
+                </Button>
                 <Link to="/admin/rooms/$roomId/label" params={{ roomId: r.id }}>
                   <Button variant="outline" size="sm"><Tag className="h-4 w-4 mr-1" /> Door label</Button>
                 </Link>
