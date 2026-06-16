@@ -126,23 +126,26 @@ function Page() {
         <CardContent>
           <ul className="divide-y">
             {(rooms ?? []).map((r: any) => (
-              <li key={r.id} className="py-3 grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] items-center gap-3">
-                <RoomQR token={r.qr_token} size={72} />
-                <div className="min-w-0">
-                  <div className="font-medium">Room {r.room_number}</div>
-                  <div className="text-xs text-muted-foreground truncate">{r.floors?.facilities?.name} · {r.floors?.name}</div>
+              <li key={r.id} className="py-3 space-y-3">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] items-center gap-3">
+                  <RoomQR token={r.qr_token} size={72} />
+                  <div className="min-w-0">
+                    <div className="font-medium">Room {r.room_number}</div>
+                    <div className="text-xs text-muted-foreground truncate">{r.floors?.facilities?.name} · {r.floors?.name}</div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadRoomQr(r.qr_token, r.room_number).catch((e) => toast.error(e?.message ?? "Download failed"))}
+                  >
+                    <Download className="h-4 w-4 mr-1" /> Download
+                  </Button>
+                  <Link to="/admin/rooms/$roomId/label" params={{ roomId: r.id }}>
+                    <Button variant="outline" size="sm"><Tag className="h-4 w-4 mr-1" /> Door label</Button>
+                  </Link>
+                  <Button variant="ghost" size="icon" onClick={() => removeRoom.mutate(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => downloadRoomQr(r.qr_token, r.room_number).catch((e) => toast.error(e?.message ?? "Download failed"))}
-                >
-                  <Download className="h-4 w-4 mr-1" /> Download
-                </Button>
-                <Link to="/admin/rooms/$roomId/label" params={{ roomId: r.id }}>
-                  <Button variant="outline" size="sm"><Tag className="h-4 w-4 mr-1" /> Door label</Button>
-                </Link>
-                <Button variant="ghost" size="icon" onClick={() => removeRoom.mutate(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                <NfcTagWriter token={String(r.qr_token)} roomNumber={r.room_number} />
               </li>
             ))}
           </ul>
