@@ -23,6 +23,7 @@ import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminLiveRouteImport } from './routes/_authenticated.admin.live'
 import { Route as AuthenticatedAdminIntegrationsRouteImport } from './routes/_authenticated.admin.integrations'
 import { Route as AuthenticatedAdminFacilitiesRouteImport } from './routes/_authenticated.admin.facilities'
+import { Route as AuthenticatedAdminDiagnosticsRouteImport } from './routes/_authenticated.admin.diagnostics'
 import { Route as AuthenticatedAdminRoomsPrintRouteImport } from './routes/_authenticated.admin.rooms.print'
 import { Route as AuthenticatedAdminRoomsLabelsRouteImport } from './routes/_authenticated.admin.rooms.labels'
 import { Route as AuthenticatedAdminRoomsRoomIdLabelRouteImport } from './routes/_authenticated.admin.rooms.$roomId.label'
@@ -100,6 +101,12 @@ const AuthenticatedAdminFacilitiesRoute =
     path: '/facilities',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminDiagnosticsRoute =
+  AuthenticatedAdminDiagnosticsRouteImport.update({
+    id: '/diagnostics',
+    path: '/diagnostics',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminRoomsPrintRoute =
   AuthenticatedAdminRoomsPrintRouteImport.update({
     id: '/print',
@@ -125,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/scan': typeof ScanRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/staff': typeof AuthenticatedStaffRoute
+  '/admin/diagnostics': typeof AuthenticatedAdminDiagnosticsRoute
   '/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
   '/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
   '/admin/live': typeof AuthenticatedAdminLiveRoute
@@ -142,6 +150,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/scan': typeof ScanRoute
   '/staff': typeof AuthenticatedStaffRoute
+  '/admin/diagnostics': typeof AuthenticatedAdminDiagnosticsRoute
   '/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
   '/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
   '/admin/live': typeof AuthenticatedAdminLiveRoute
@@ -162,6 +171,7 @@ export interface FileRoutesById {
   '/scan': typeof ScanRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/staff': typeof AuthenticatedStaffRoute
+  '/_authenticated/admin/diagnostics': typeof AuthenticatedAdminDiagnosticsRoute
   '/_authenticated/admin/facilities': typeof AuthenticatedAdminFacilitiesRoute
   '/_authenticated/admin/integrations': typeof AuthenticatedAdminIntegrationsRoute
   '/_authenticated/admin/live': typeof AuthenticatedAdminLiveRoute
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/admin'
     | '/staff'
+    | '/admin/diagnostics'
     | '/admin/facilities'
     | '/admin/integrations'
     | '/admin/live'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/scan'
     | '/staff'
+    | '/admin/diagnostics'
     | '/admin/facilities'
     | '/admin/integrations'
     | '/admin/live'
@@ -218,6 +230,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/_authenticated/admin'
     | '/_authenticated/staff'
+    | '/_authenticated/admin/diagnostics'
     | '/_authenticated/admin/facilities'
     | '/_authenticated/admin/integrations'
     | '/_authenticated/admin/live'
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFacilitiesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/diagnostics': {
+      id: '/_authenticated/admin/diagnostics'
+      path: '/diagnostics'
+      fullPath: '/admin/diagnostics'
+      preLoaderRoute: typeof AuthenticatedAdminDiagnosticsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/rooms/print': {
       id: '/_authenticated/admin/rooms/print'
       path: '/print'
@@ -382,6 +402,7 @@ const AuthenticatedAdminRoomsRouteWithChildren =
   )
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminDiagnosticsRoute: typeof AuthenticatedAdminDiagnosticsRoute
   AuthenticatedAdminFacilitiesRoute: typeof AuthenticatedAdminFacilitiesRoute
   AuthenticatedAdminIntegrationsRoute: typeof AuthenticatedAdminIntegrationsRoute
   AuthenticatedAdminLiveRoute: typeof AuthenticatedAdminLiveRoute
@@ -393,6 +414,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminDiagnosticsRoute: AuthenticatedAdminDiagnosticsRoute,
   AuthenticatedAdminFacilitiesRoute: AuthenticatedAdminFacilitiesRoute,
   AuthenticatedAdminIntegrationsRoute: AuthenticatedAdminIntegrationsRoute,
   AuthenticatedAdminLiveRoute: AuthenticatedAdminLiveRoute,
