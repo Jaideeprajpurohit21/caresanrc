@@ -356,7 +356,9 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
-      submit_round_scan: { Args: { p_qr_token: string }; Returns: Json }
+      submit_round_scan:
+        | { Args: { p_qr_token: string }; Returns: Json }
+        | { Args: { p_dry_run?: boolean; p_qr_token: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "staff"
