@@ -10,6 +10,9 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Printer, Trash2, Tag, Download, Archive } from "lucide-react";
 import { RoomQR } from "@/components/RoomQR";
+import { NfcTagWriter } from "@/components/NfcTagWriter";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 import QRCode from "qrcode";
 
 async function makeQrPngBlob(token: string): Promise<Blob> {
