@@ -223,6 +223,50 @@ export type Database = {
           },
         ]
       }
+      scan_error_logs: {
+        Row: {
+          code: string
+          created_at: string
+          dry_run: boolean
+          id: string
+          message: string | null
+          qr_token: string | null
+          room_id: string | null
+          title: string | null
+          user_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          dry_run?: boolean
+          id?: string
+          message?: string | null
+          qr_token?: string | null
+          room_id?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          dry_run?: boolean
+          id?: string
+          message?: string | null
+          qr_token?: string | null
+          room_id?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_error_logs_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scan_logs: {
         Row: {
           completed_at: string
