@@ -388,13 +388,20 @@ export const listRecentScanErrors = createServerFn({ method: "POST" })
     await ensureAdmin(context);
     let q = context.supabase
       .from("scan_error_logs")
-      .select("id, created_at, code, title, message, dry_run, user_id, qr_token, profiles:user_id(full_name,email)")
+      .select("id, created_at, code, title, message, dry_run, user_id, qr_token")
       .order("created_at", { ascending: false })
       .limit(data.limit ?? 50);
     if (!data.include_dry_run) q = q.eq("dry_run", false);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id).filter((x): x is string => !!x)));
+    let profileMap = new Map<string, { full_name: string | null; email: string | null }>();
+    if (userIds.length) {
+      const { data: profs } = await context.supabase
+        .from("profiles").select("id, full_name, email").in("id", userIds);
+      for (const p of profs ?? []) profileMap.set(p.id, { full_name: p.full_name, email: p.email });
+    }
+    return (rows ?? []).map((r) => ({ ...r, profiles: r.user_id ? profileMap.get(r.user_id) ?? null : null }));
   });
 
 
