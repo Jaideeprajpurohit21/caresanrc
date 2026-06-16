@@ -98,6 +98,15 @@ function Page() {
         </div>
       </div>
 
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription className="text-sm">
+          <strong>NFC check-in requires Android devices</strong> running Chrome, Edge, or Samsung Internet.
+          iPhones and iPads cannot read NFC tags through a web browser (an Apple platform restriction) and
+          will automatically fall back to the QR camera scanner instead.
+        </AlertDescription>
+      </Alert>
+
       <Card>
         <CardHeader><CardTitle className="text-base">Bulk add rooms</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-2">
