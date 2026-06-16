@@ -1,13 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle2, XCircle, Info } from "lucide-react";
-import { listRooms, submitRoundScanDryRun } from "@/lib/api/rounding.functions";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertTriangle, CheckCircle2, XCircle, Info, RefreshCw } from "lucide-react";
+import {
+  listRooms,
+  submitRoundScanDryRun,
+  getScanErrorSummary,
+  listRecentScanErrors,
+} from "@/lib/api/rounding.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/diagnostics")({
   head: () => ({ meta: [{ title: "Diagnostics — Admin" }] }),
