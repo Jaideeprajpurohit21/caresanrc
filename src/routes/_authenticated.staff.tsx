@@ -90,31 +90,67 @@ function StaffPage() {
     },
   });
 
-  if (checkInOpen) {
-    if (nfc) {
-      return (
-        <NfcCheckIn
-          busy={mutate.isPending}
-          onClose={() => setCheckInOpen(false)}
-          onToken={(token) => {
-            setCheckInOpen(false);
-            mutate.mutate({ qr_token: token, input_method: "nfc" });
-          }}
-        />
-      );
-    }
+  if (mode === "choose") {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col">
+        <div className="flex items-center justify-between p-3 border-b">
+          <div className="font-semibold">Check in</div>
+          <Button variant="ghost" onClick={() => setMode("closed")} aria-label="Close">
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        <div className="flex-1 flex flex-col justify-center gap-4 p-6 max-w-md w-full mx-auto">
+          <p className="text-sm text-muted-foreground text-center">
+            Choose how you want to check in to this room.
+          </p>
+          <Button size="lg" className="w-full h-20 text-base" onClick={() => setMode("qr")}>
+            <QrCode className="h-6 w-6 mr-2" /> Scan QR code
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="w-full h-20 text-base"
+            onClick={() => setMode("nfc")}
+          >
+            <Smartphone className="h-6 w-6 mr-2" /> Scan NFC tag
+          </Button>
+          {!nfc && (
+            <p className="text-xs text-muted-foreground text-center">
+              NFC tags need an Android phone with Chrome.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === "nfc") {
+    return (
+      <NfcCheckIn
+        busy={mutate.isPending}
+        onClose={() => setMode("choose")}
+        onToken={(token) => {
+          setMode("closed");
+          mutate.mutate({ qr_token: token, input_method: "nfc" });
+        }}
+      />
+    );
+  }
+
+  if (mode === "qr") {
     return (
       <RoomScanner
         lastResult={lastResult}
         onScan={(token) => {
           if (mutate.isPending) return;
-          setCheckInOpen(false);
+          setMode("closed");
           mutate.mutate({ qr_token: token, input_method: "qr" });
         }}
-        onClose={() => setCheckInOpen(false)}
+        onClose={() => setMode("choose")}
       />
     );
   }
+
 
   return (
     <div className="mx-auto max-w-md p-4 space-y-4">
