@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Smartphone } from "lucide-react";
+import { Camera, Smartphone, QrCode, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getMyStaffHome, submitRoundScan } from "@/lib/api/rounding.functions";
@@ -30,7 +30,7 @@ function StaffPage() {
   const getHome = useServerFn(getMyStaffHome);
   const scan = useServerFn(submitRoundScan);
   const qc = useQueryClient();
-  const [checkInOpen, setCheckInOpen] = useState(false);
+  const [mode, setMode] = useState<"closed" | "choose" | "qr" | "nfc">("closed");
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const signedOutRef = useRef(false);
   const nfc = isNfcSupported();
