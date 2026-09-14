@@ -69,7 +69,7 @@ function StaffPage() {
     mutationFn: (vars: { qr_token: string; input_method: "qr" | "nfc" }) => scan({ data: vars }),
     onSuccess: async (res: any) => {
       setLastResult(res);
-      qc.invalidateQueries({ queryKey: ["my-staff-home"] });
+      qc.invalidateQueries({ queryKey: ["my-staff-dashboard"] });
       if (res.ok) toast.success(res.title);
       else toast.error(res.title);
       if (res.code === "not_authenticated" && !signedOutRef.current) {
