@@ -2,13 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Smartphone, QrCode, X } from "lucide-react";
+import { Camera, Smartphone, QrCode, X, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getMyStaffHome, submitRoundScan } from "@/lib/api/rounding.functions";
+import { getMyStaffDashboard, submitRoundScan } from "@/lib/api/rounding.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { RoomScanner, ScanResultCard, type ScanResult } from "@/components/RoomScanner";
 import { NfcCheckIn, isNfcSupported } from "@/components/NfcCheckIn";
+import { fmtTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/staff")({
   ssr: false,
