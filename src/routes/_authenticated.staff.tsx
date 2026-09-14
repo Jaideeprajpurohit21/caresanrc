@@ -171,12 +171,8 @@ function StaffPage() {
         </p>
       </div>
 
-      <Button size="lg" className="w-full h-16 text-base" onClick={() => setCheckInOpen(true)}>
-        {nfc ? (
-          <><Smartphone className="h-6 w-6 mr-2" /> Tap to check in</>
-        ) : (
-          <><Camera className="h-6 w-6 mr-2" /> Scan QR code</>
-        )}
+      <Button size="lg" className="w-full h-16 text-base" onClick={() => setMode("choose")}>
+        <Camera className="h-6 w-6 mr-2" /> Check In
       </Button>
     </div>
   );
