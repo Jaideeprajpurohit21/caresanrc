@@ -19,7 +19,7 @@ function ScanPage() {
   const navigate = useNavigate();
   const scan = useServerFn(submitRoundScan);
   const [ready, setReady] = useState(false);
-  const [scanning, setScanning] = useState(true);
+  const [mode, setMode] = useState<"closed" | "choose" | "qr" | "nfc">("choose");
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const nfc = isNfcSupported();
 
