@@ -21,7 +21,7 @@ function IndexRedirect() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getSession();
-      if (!data.session) { navigate({ to: "/auth", replace: true }); return; }
+      if (!data.session) { navigate({ to: "/auth", replace: true, search: { redirect: undefined } }); return; }
       const profile = await me({}).catch(() => null);
       if (profile?.isAdmin) navigate({ to: "/admin", replace: true });
       else navigate({ to: "/staff", replace: true });

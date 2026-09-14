@@ -13,7 +13,7 @@ export function AppShell({
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.invalidate();
-    navigate({ to: "/auth", replace: true });
+    navigate({ to: "/auth", replace: true, search: { redirect: undefined } });
   };
 
   const adminLinks = [
