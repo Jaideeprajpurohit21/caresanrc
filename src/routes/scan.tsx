@@ -40,7 +40,7 @@ function ScanPage() {
     mutationFn: (vars: { qr_token: string; input_method: "qr" | "nfc" }) => scan({ data: vars }),
     onSuccess: async (res: any) => {
       setLastResult(res);
-      setScanning(false);
+      setMode("closed");
       if (res.ok) toast.success(res.title);
       else toast.error(res.title);
       if (res.code === "not_authenticated") {
