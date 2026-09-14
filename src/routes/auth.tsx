@@ -66,12 +66,17 @@ function AuthPage() {
         // Sign in immediately (email confirm is off by default in Cloud)
         await supabase.auth.signInWithPassword({ email: normalizedEmail, password: normalizedPassword });
         await claim({}).catch(() => {});
+        await queryClient.cancelQueries();
+        queryClient.clear();
         toast.success("Account created");
         navigate({ to: next as any, replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: normalizedPassword });
         if (error) throw error;
         await claim({}).catch(() => {});
+        // Drop any data cached for a previously signed-in user before rendering the app.
+        await queryClient.cancelQueries();
+        queryClient.clear();
         navigate({ to: next as any, replace: true });
       }
     } catch (err: any) {
