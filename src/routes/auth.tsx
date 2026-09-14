@@ -9,6 +9,7 @@ import { ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import { claimAdminIfNone } from "@/lib/api/rounding.functions";
 import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -40,6 +41,7 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const claim = useServerFn(claimAdminIfNone);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -64,12 +66,17 @@ function AuthPage() {
         // Sign in immediately (email confirm is off by default in Cloud)
         await supabase.auth.signInWithPassword({ email: normalizedEmail, password: normalizedPassword });
         await claim({}).catch(() => {});
+        await queryClient.cancelQueries();
+        queryClient.clear();
         toast.success("Account created");
         navigate({ to: next as any, replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: normalizedPassword });
         if (error) throw error;
         await claim({}).catch(() => {});
+        // Drop any data cached for a previously signed-in user before rendering the app.
+        await queryClient.cancelQueries();
+        queryClient.clear();
         navigate({ to: next as any, replace: true });
       }
     } catch (err: any) {

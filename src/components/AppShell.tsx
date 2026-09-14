@@ -1,4 +1,5 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, LayoutDashboard, Building2, DoorOpen, Users, Clock, FileBarChart, ScanLine, Activity, Plug, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,11 @@ export function AppShell({
 }: { children: ReactNode; isAdmin: boolean; fullName: string }) {
   const router = useRouter();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const handleSignOut = async () => {
+    await queryClient.cancelQueries();
+    queryClient.clear();
     await supabase.auth.signOut();
     router.invalidate();
     navigate({ to: "/auth", replace: true, search: { redirect: undefined } });
