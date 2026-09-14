@@ -30,6 +30,8 @@ function ScanPage() {
   const [mode, setMode] = useState<"closed" | "choose" | "qr" | "nfc">("choose");
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const nfc = isNfcSupported();
+  const { code } = Route.useSearch();
+  const autoSent = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -58,6 +60,14 @@ function ScanPage() {
     },
     onError: (e: any) => toast.error(e?.message ?? "Scan failed"),
   });
+
+  // A reader or shortcut can open /scan?code=<tag serial or room code>.
+  useEffect(() => {
+    if (!ready || !code || autoSent.current) return;
+    autoSent.current = true;
+    setMode("closed");
+    mutate.mutate({ qr_token: code, input_method: "nfc" });
+  }, [ready, code, mutate]);
 
   if (!ready) return null;
 
