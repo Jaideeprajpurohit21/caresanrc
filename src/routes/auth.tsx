@@ -9,6 +9,7 @@ import { ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import { claimAdminIfNone } from "@/lib/api/rounding.functions";
 import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
