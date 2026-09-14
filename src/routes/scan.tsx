@@ -11,7 +11,15 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/scan")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Scan — POC Rounding Portal" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    code: typeof search.code === "string" ? search.code : undefined,
+  }),
+  head: () => ({
+    meta: [
+      { title: "Check in — POC Rounding Portal" },
+      { name: "description", content: "Check in to a resident room by scanning its QR code or tapping its NFC tag." },
+    ],
+  }),
   component: ScanPage,
 });
 
