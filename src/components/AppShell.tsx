@@ -10,8 +10,11 @@ export function AppShell({
 }: { children: ReactNode; isAdmin: boolean; fullName: string }) {
   const router = useRouter();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const handleSignOut = async () => {
+    await queryClient.cancelQueries();
+    queryClient.clear();
     await supabase.auth.signOut();
     router.invalidate();
     navigate({ to: "/auth", replace: true, search: { redirect: undefined } });
