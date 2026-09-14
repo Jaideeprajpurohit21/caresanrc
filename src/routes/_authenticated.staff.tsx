@@ -28,7 +28,7 @@ function greeting() {
 }
 
 function StaffPage() {
-  const getHome = useServerFn(getMyStaffHome);
+  const getHome = useServerFn(getMyStaffDashboard);
   const scan = useServerFn(submitRoundScan);
   const qc = useQueryClient();
   const [mode, setMode] = useState<"closed" | "choose" | "qr" | "nfc">("closed");
@@ -37,7 +37,7 @@ function StaffPage() {
   const nfc = isNfcSupported();
 
   const { data } = useSuspenseQuery({
-    queryKey: ["my-staff-home"],
+    queryKey: ["my-staff-dashboard"],
     queryFn: () => getHome({}),
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
