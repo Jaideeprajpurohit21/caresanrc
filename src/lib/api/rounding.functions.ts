@@ -499,6 +499,82 @@ export const getMyStaffHome = createServerFn({ method: "GET" })
     };
   });
 
+// Staff dashboard: upcoming rounds, completed check-ins and my scan history grouped by round.
+export const getMyStaffDashboard = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: profile } = await supabase
+      .from("profiles").select("full_name,email,facility_id").eq("id", userId).maybeSingle();
+
+    const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+
+    // Floors in my facility (fall back to all readable floors when unassigned).
+    let floorQuery = supabase.from("floors").select("id,name");
+    if (profile?.facility_id) floorQuery = floorQuery.eq("facility_id", profile.facility_id);
+    const { data: floors } = await floorQuery;
+
+    type Item = {
+      room_id: string; room_number: string; floor: string; status: string;
+      round_index: number; scheduled_for: string; completed_at: string | null; completed_by: string | null;
+    };
+    const items: Item[] = [];
+    for (const f of (floors ?? []) as any[]) {
+      const { data: rows } = await supabase.rpc("get_floor_status", { p_floor_id: f.id });
+      for (const r of (rows ?? []) as any[]) items.push({ ...r, floor: f.name });
+    }
+
+    const upcoming = items
+      .filter((i) => i.status === "active" || i.status === "upcoming" || i.status === "overdue")
+      .sort((a, b) => a.scheduled_for.localeCompare(b.scheduled_for));
+
+    // My scans today, newest first, with room numbers.
+    const { data: myScans } = await supabase
+      .from("scan_logs")
+      .select("id,room_id,round_index,shift_label,scheduled_for,completed_at,late_minutes,input_method")
+      .eq("user_id", userId)
+      .gte("completed_at", dayStart.toISOString())
+      .order("completed_at", { ascending: false });
+
+    const roomIds = [...new Set((myScans ?? []).map((s: any) => s.room_id))];
+    const roomMap = new Map<string, string>();
+    if (roomIds.length) {
+      const { data: rooms } = await supabase.from("rooms").select("id,room_number").in("id", roomIds);
+      for (const r of (rooms ?? []) as any[]) roomMap.set(r.id, r.room_number);
+    }
+
+    const groups = new Map<string, {
+      key: string; round_index: number; shift_label: string; scheduled_for: string;
+      scans: { id: string; room_number: string; completed_at: string; late_minutes: number; input_method: string }[];
+    }>();
+    for (const s of (myScans ?? []) as any[]) {
+      const key = `${s.shift_label}#${s.round_index}#${s.scheduled_for}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key, round_index: s.round_index, shift_label: s.shift_label,
+          scheduled_for: s.scheduled_for, scans: [],
+        });
+      }
+      groups.get(key)!.scans.push({
+        id: s.id,
+        room_number: roomMap.get(s.room_id) ?? "—",
+        completed_at: s.completed_at,
+        late_minutes: s.late_minutes ?? 0,
+        input_method: s.input_method ?? "qr",
+      });
+    }
+
+    return {
+      full_name: profile?.full_name ?? profile?.email ?? "",
+      scans_today: (myScans ?? []).length,
+      completed_rooms_today: items.filter((i) => i.status === "completed").length,
+      due_now: items.filter((i) => i.status === "active").length,
+      overdue: items.filter((i) => i.status === "overdue").length,
+      upcoming: upcoming.slice(0, 25),
+      rounds: [...groups.values()].sort((a, b) => b.scheduled_for.localeCompare(a.scheduled_for)),
+    };
+  });
+
 export const getRoundReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { floor_id: string; from: string; to: string; status?: string; user_id?: string }) =>
