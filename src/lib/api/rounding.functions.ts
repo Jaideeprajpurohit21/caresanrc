@@ -114,6 +114,64 @@ export const deleteRoom = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ---------- NFC tag links ----------
+export const listRoomNfcTags = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("room_nfc_tags")
+      .select("id,tag_uid,label,created_at,room_id,rooms(id,room_number,floors(name,facilities(name)))")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const linkRoomNfcTag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { room_id: string; tag_uid: string; label?: string }) =>
+    z.object({
+      room_id: z.string().uuid(),
+      tag_uid: z.string().min(2).max(120),
+      label: z.string().max(80).optional(),
+    }).parse(d))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const tag = data.tag_uid.trim();
+    const normalized = tag.replace(/[^0-9a-zA-Z]/g, "").toLowerCase();
+    if (!normalized) throw new Error("That tag serial number is empty or unreadable.");
+    const { data: existing } = await context.supabase
+      .from("room_nfc_tags")
+      .select("id,room_id,rooms(room_number)")
+      .eq("tag_uid_normalized", normalized)
+      .maybeSingle();
+    if (existing) {
+      if (existing.room_id === data.room_id) return { ok: true, id: existing.id, moved: false };
+      const { error: uErr } = await context.supabase
+        .from("room_nfc_tags")
+        .update({ room_id: data.room_id, tag_uid: tag, label: data.label ?? null })
+        .eq("id", existing.id);
+      if (uErr) throw new Error(uErr.message);
+      return { ok: true, id: existing.id, moved: true };
+    }
+    const { data: row, error } = await context.supabase
+      .from("room_nfc_tags")
+      .insert({ room_id: data.room_id, tag_uid: tag, label: data.label ?? null })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { ok: true, id: row.id, moved: false };
+  });
+
+export const unlinkRoomNfcTag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await ensureAdmin(context);
+    const { error } = await context.supabase.from("room_nfc_tags").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 // ---------- round schedules ----------
 export const listSchedules = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

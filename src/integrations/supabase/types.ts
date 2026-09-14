@@ -147,6 +147,44 @@ export type Database = {
           },
         ]
       }
+      room_nfc_tags: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          room_id: string
+          tag_uid: string
+          tag_uid_normalized: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          room_id: string
+          tag_uid: string
+          tag_uid_normalized?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          room_id?: string
+          tag_uid?: string
+          tag_uid_normalized?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_nfc_tags_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rooms: {
         Row: {
           created_at: string
@@ -403,6 +441,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      normalize_tag_uid: { Args: { p_uid: string }; Returns: string }
       submit_round_scan:
         | { Args: { p_qr_token: string }; Returns: Json }
         | { Args: { p_dry_run?: boolean; p_qr_token: string }; Returns: Json }

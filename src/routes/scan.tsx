@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,15 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/scan")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Scan — POC Rounding Portal" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    code: typeof search.code === "string" ? search.code : undefined,
+  }),
+  head: () => ({
+    meta: [
+      { title: "Check in — POC Rounding Portal" },
+      { name: "description", content: "Check in to a resident room by scanning its QR code or tapping its NFC tag." },
+    ],
+  }),
   component: ScanPage,
 });
 
@@ -22,6 +30,8 @@ function ScanPage() {
   const [mode, setMode] = useState<"closed" | "choose" | "qr" | "nfc">("choose");
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const nfc = isNfcSupported();
+  const { code } = Route.useSearch();
+  const autoSent = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -51,6 +61,14 @@ function ScanPage() {
     onError: (e: any) => toast.error(e?.message ?? "Scan failed"),
   });
 
+  // A reader or shortcut can open /scan?code=<tag serial or room code>.
+  useEffect(() => {
+    if (!ready || !code || autoSent.current) return;
+    autoSent.current = true;
+    setMode("closed");
+    mutate.mutate({ qr_token: code, input_method: "nfc" });
+  }, [ready, code, mutate]);
+
   if (!ready) return null;
 
   if (mode === "choose") {
@@ -68,7 +86,7 @@ function ScanPage() {
         </Button>
         {!nfc && (
           <p className="text-xs text-muted-foreground text-center">
-            NFC tags need an Android phone with Chrome.
+            On this device, NFC works through a connected tag reader.
           </p>
         )}
       </div>

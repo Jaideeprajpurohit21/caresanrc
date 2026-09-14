@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Printer, Trash2, Tag, Download, Archive } from "lucide-react";
+import { Printer, Trash2, Tag, Download, Archive, Smartphone } from "lucide-react";
 import { RoomQR } from "@/components/RoomQR";
 import { NfcTagWriter } from "@/components/NfcTagWriter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -93,6 +93,7 @@ function Page() {
           >
             <Archive className="h-4 w-4 mr-2" /> Download all (ZIP)
           </Button>
+          <Link to="/admin/rooms/nfc"><Button variant="outline"><Smartphone className="h-4 w-4 mr-2" /> Link NFC tags</Button></Link>
           <Link to="/admin/rooms/labels"><Button variant="outline"><Tag className="h-4 w-4 mr-2" /> Print door labels</Button></Link>
           <Link to="/admin/rooms/print"><Button variant="outline"><Printer className="h-4 w-4 mr-2" /> Print QR sheet</Button></Link>
         </div>
@@ -101,9 +102,10 @@ function Page() {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription className="text-sm">
-          <strong>NFC check-in requires Android devices</strong> running Chrome, Edge, or Samsung Internet.
-          iPhones and iPads cannot read NFC tags through a web browser (an Apple platform restriction) and
-          will automatically fall back to the QR camera scanner instead.
+          <strong>Two ways to use NFC.</strong> Android phones running Chrome, Edge, or Samsung Internet read tags
+          directly. iPads and iPhones need an NFC reader connected to them — those readers send the tag's serial
+          number into the check-in screen. Link each tag's serial number to its room first under{" "}
+          <strong>Link NFC tags</strong>. QR scanning stays available on every device.
         </AlertDescription>
       </Alert>
 

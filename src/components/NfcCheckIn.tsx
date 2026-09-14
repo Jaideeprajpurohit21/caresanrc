@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Smartphone, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Smartphone, X, Usb } from "lucide-react";
 
 export function isNfcSupported(): boolean {
   return typeof window !== "undefined" && "NDEFReader" in window;
@@ -17,7 +18,51 @@ export function NfcCheckIn({
 }) {
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [manual, setManual] = useState("");
+  const [showManual, setShowManual] = useState(false);
   const supported = isNfcSupported();
+
+  // External reader capture: most readers act as a keyboard and "type" the
+  // tag serial, ending with Enter. Buffer keystrokes and submit on Enter or
+  // after a short idle pause.
+  const bufferRef = useRef("");
+  const timerRef = useRef<number | null>(null);
+  const submittedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const submit = () => {
+      const value = bufferRef.current.trim();
+      bufferRef.current = "";
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+      if (value.length < 4 || submittedRef.current) return;
+      submittedRef.current = true;
+      onToken(value);
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (busy || submittedRef.current) return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submit();
+        return;
+      }
+      if (e.key.length !== 1) return;
+      bufferRef.current += e.key;
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(submit, 350);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+    };
+  }, [busy, onToken]);
 
   async function startNfcCheckIn() {
     setError(null);
@@ -28,20 +73,28 @@ export function NfcCheckIn({
       setListening(true);
       reader.onreading = (event: any) => {
         try {
-          const record = event.message.records[0];
-          const decoder = new TextDecoder(record.encoding || "utf-8");
-          const token = decoder.decode(record.data);
+          const record = event.message?.records?.[0];
+          let token = "";
+          if (record) {
+            const decoder = new TextDecoder(record.encoding || "utf-8");
+            token = decoder.decode(record.data);
+          }
+          if (!token && event.serialNumber) token = String(event.serialNumber);
           reader.onreading = null;
           setListening(false);
+          if (!token) {
+            setError("Couldn't read that tag. Try tapping again.");
+            return;
+          }
           onToken(token);
-        } catch (e: any) {
+        } catch {
           setError("Couldn't read that tag. Try tapping again.");
         }
       };
       reader.onreadingerror = () => {
         setError("Couldn't read that tag. Try tapping again.");
       };
-    } catch (err: any) {
+    } catch {
       setListening(false);
       setError(
         "NFC permission was denied, or NFC is turned off on this device. Enable NFC in your device settings and try again.",
@@ -57,18 +110,28 @@ export function NfcCheckIn({
           <X className="h-5 w-5" />
         </Button>
       </div>
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
-        <div className={`rounded-full p-8 ${listening ? "bg-primary/10 animate-pulse" : "bg-muted"}`}>
-          <Smartphone className="h-20 w-20 text-primary" />
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6 overflow-y-auto">
+        <div className={`rounded-full p-8 ${listening || !supported ? "bg-primary/10 animate-pulse" : "bg-muted"}`}>
+          {supported ? (
+            <Smartphone className="h-20 w-20 text-primary" />
+          ) : (
+            <Usb className="h-20 w-20 text-primary" />
+          )}
         </div>
         <div className="space-y-2 max-w-sm">
           <h2 className="text-xl font-semibold">
-            {listening ? "Ready — tap the tag" : "Tap your device to the tag in the room"}
+            {supported
+              ? listening
+                ? "Ready — tap the tag"
+                : "Tap your device to the tag in the room"
+              : "Waiting for the reader — hold the tag against it"}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {listening
-              ? "Hold the back of your device against the NFC tag on the door."
-              : "Press Start, then hold the back of your device against the room's NFC tag."}
+            {supported
+              ? listening
+                ? "Hold the back of your device against the NFC tag on the door."
+                : "Press Start, then hold the back of your device against the room's NFC tag."
+              : "This device reads tags through the NFC reader connected to it. Hold the tag against the reader — the check-in happens automatically."}
           </p>
         </div>
         {error && (
@@ -76,22 +139,41 @@ export function NfcCheckIn({
             {error}
           </div>
         )}
-        {!supported && (
-          <div className="rounded-lg border p-3 text-sm text-muted-foreground max-w-sm">
-            This device or browser can't read NFC tags. Use an Android phone with Chrome, or go back and
-            scan the room's QR code instead.
-          </div>
-        )}
         {supported && !listening && (
           <Button size="lg" className="h-14 px-8 text-base" onClick={startNfcCheckIn} disabled={busy}>
             {error ? "Try again" : "Start"}
           </Button>
         )}
-        {!supported && (
-          <Button size="lg" variant="outline" className="h-14 px-8 text-base" onClick={onClose}>
-            Go back
-          </Button>
-        )}
+
+        <div className="w-full max-w-sm space-y-3">
+          {!showManual ? (
+            <Button variant="ghost" size="sm" onClick={() => setShowManual(true)}>
+              Enter code by hand
+            </Button>
+          ) : (
+            <form
+              className="flex gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const v = manual.trim();
+                if (v.length < 2) return;
+                setManual("");
+                onToken(v);
+              }}
+            >
+              <Input
+                autoFocus
+                value={manual}
+                onChange={(e) => setManual(e.target.value)}
+                placeholder="Tag or room code"
+                aria-label="Tag or room code"
+              />
+              <Button type="submit" disabled={busy || manual.trim().length < 2}>
+                Check in
+              </Button>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );
