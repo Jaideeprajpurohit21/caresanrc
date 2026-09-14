@@ -86,7 +86,7 @@ function ScanPage() {
         </Button>
         {!nfc && (
           <p className="text-xs text-muted-foreground text-center">
-            NFC tags need an Android phone with Chrome.
+            On this device, NFC works through a connected tag reader.
           </p>
         )}
       </div>
