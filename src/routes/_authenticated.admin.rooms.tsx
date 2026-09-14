@@ -93,6 +93,7 @@ function Page() {
           >
             <Archive className="h-4 w-4 mr-2" /> Download all (ZIP)
           </Button>
+          <Link to="/admin/rooms/nfc"><Button variant="outline"><Smartphone className="h-4 w-4 mr-2" /> Link NFC tags</Button></Link>
           <Link to="/admin/rooms/labels"><Button variant="outline"><Tag className="h-4 w-4 mr-2" /> Print door labels</Button></Link>
           <Link to="/admin/rooms/print"><Button variant="outline"><Printer className="h-4 w-4 mr-2" /> Print QR sheet</Button></Link>
         </div>
