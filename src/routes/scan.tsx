@@ -19,7 +19,7 @@ function ScanPage() {
   const navigate = useNavigate();
   const scan = useServerFn(submitRoundScan);
   const [ready, setReady] = useState(false);
-  const [scanning, setScanning] = useState(true);
+  const [mode, setMode] = useState<"closed" | "choose" | "qr" | "nfc">("choose");
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const nfc = isNfcSupported();
 
@@ -40,7 +40,7 @@ function ScanPage() {
     mutationFn: (vars: { qr_token: string; input_method: "qr" | "nfc" }) => scan({ data: vars }),
     onSuccess: async (res: any) => {
       setLastResult(res);
-      setScanning(false);
+      setMode("closed");
       if (res.ok) toast.success(res.title);
       else toast.error(res.title);
       if (res.code === "not_authenticated") {
@@ -53,16 +53,39 @@ function ScanPage() {
 
   if (!ready) return null;
 
-  if (scanning) {
-    if (nfc) {
-      return (
-        <NfcCheckIn
-          busy={mutate.isPending}
-          onClose={() => setScanning(false)}
-          onToken={(token) => mutate.mutate({ qr_token: token, input_method: "nfc" })}
-        />
-      );
-    }
+  if (mode === "choose") {
+    return (
+      <div className="mx-auto max-w-md p-6 min-h-screen flex flex-col justify-center gap-4">
+        <h1 className="text-xl font-semibold text-center">Check in</h1>
+        <p className="text-sm text-muted-foreground text-center">
+          Choose how you want to check in to this room.
+        </p>
+        <Button size="lg" className="w-full h-20 text-base" onClick={() => setMode("qr")}>
+          Scan QR code
+        </Button>
+        <Button size="lg" variant="outline" className="w-full h-20 text-base" onClick={() => setMode("nfc")}>
+          Scan NFC tag
+        </Button>
+        {!nfc && (
+          <p className="text-xs text-muted-foreground text-center">
+            NFC tags need an Android phone with Chrome.
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  if (mode === "nfc") {
+    return (
+      <NfcCheckIn
+        busy={mutate.isPending}
+        onClose={() => setMode("choose")}
+        onToken={(token) => mutate.mutate({ qr_token: token, input_method: "nfc" })}
+      />
+    );
+  }
+
+  if (mode === "qr") {
     return (
       <RoomScanner
         lastResult={lastResult}
@@ -70,7 +93,7 @@ function ScanPage() {
           if (mutate.isPending) return;
           mutate.mutate({ qr_token: token, input_method: "qr" });
         }}
-        onClose={() => setScanning(false)}
+        onClose={() => setMode("choose")}
       />
     );
   }
@@ -78,8 +101,8 @@ function ScanPage() {
   return (
     <div className="mx-auto max-w-md p-4 space-y-3 min-h-screen">
       {lastResult && <ScanResultCard result={lastResult} onDismiss={() => setLastResult(null)} />}
-      <Button className="w-full" onClick={() => setScanning(true)}>
-        {nfc ? "Tap another" : "Scan another"}
+      <Button className="w-full" onClick={() => setMode("choose")}>
+        Check in again
       </Button>
     </div>
   );
