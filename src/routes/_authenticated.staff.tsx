@@ -175,6 +175,91 @@ function StaffPage() {
       <Button size="lg" className="w-full h-16 text-base" onClick={() => setMode("choose")}>
         <Camera className="h-6 w-6 mr-2" /> Check In
       </Button>
+
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-lg border p-3 text-center">
+          <div className="text-2xl font-semibold">{data.due_now}</div>
+          <div className="text-xs text-muted-foreground">Due now</div>
+        </div>
+        <div className="rounded-lg border p-3 text-center">
+          <div className="text-2xl font-semibold text-destructive">{data.overdue}</div>
+          <div className="text-xs text-muted-foreground">Overdue</div>
+        </div>
+        <div className="rounded-lg border p-3 text-center">
+          <div className="text-2xl font-semibold">{data.completed_rooms_today}</div>
+          <div className="text-xs text-muted-foreground">Completed</div>
+        </div>
+      </div>
+
+      <section className="space-y-2">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <Clock className="h-4 w-4 text-muted-foreground" /> Upcoming check-ins
+        </h2>
+        {data.upcoming.length === 0 ? (
+          <p className="rounded-lg border p-3 text-sm text-muted-foreground">
+            Nothing scheduled right now.
+          </p>
+        ) : (
+          <ul className="divide-y rounded-lg border">
+            {data.upcoming.map((u) => (
+              <li key={`${u.room_id}-${u.round_index}`} className="flex items-center justify-between gap-2 p-3">
+                <div className="min-w-0">
+                  <div className="truncate font-medium">Room {u.room_number}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {u.floor} · Round {u.round_index}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-sm">{fmtTime(u.scheduled_for)}</div>
+                  <div className={`text-xs ${u.status === "overdue" ? "text-destructive" : "text-muted-foreground"}`}>
+                    {u.status === "overdue" ? (
+                      <span className="inline-flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" /> Overdue
+                      </span>
+                    ) : u.status === "active" ? "Open now" : "Upcoming"}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <CheckCircle2 className="h-4 w-4 text-muted-foreground" /> My check-ins today
+        </h2>
+        {data.rounds.length === 0 ? (
+          <p className="rounded-lg border p-3 text-sm text-muted-foreground">
+            You haven't checked in to any rooms yet today.
+          </p>
+        ) : (
+          data.rounds.map((r) => (
+            <div key={r.key} className="rounded-lg border">
+              <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2">
+                <div className="text-sm font-medium">
+                  Round {r.round_index} · {r.shift_label}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Due {fmtTime(r.scheduled_for)} · {r.scans.length} {r.scans.length === 1 ? "room" : "rooms"}
+                </div>
+              </div>
+              <ul className="divide-y">
+                {r.scans.map((s) => (
+                  <li key={s.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+                    <span className="truncate">Room {s.room_number}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {fmtTime(s.completed_at)}
+                      {s.late_minutes > 0 ? ` · ${s.late_minutes} min late` : ""}
+                      {` · ${s.input_method.toUpperCase()}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        )}
+      </section>
     </div>
   );
 }
