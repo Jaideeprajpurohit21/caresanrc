@@ -17,6 +17,7 @@ export function NfcCheckIn({
 }) {
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const supported = isNfcSupported();
 
   async function startNfcCheckIn() {
     setError(null);
@@ -75,9 +76,20 @@ export function NfcCheckIn({
             {error}
           </div>
         )}
-        {!listening && (
+        {!supported && (
+          <div className="rounded-lg border p-3 text-sm text-muted-foreground max-w-sm">
+            This device or browser can't read NFC tags. Use an Android phone with Chrome, or go back and
+            scan the room's QR code instead.
+          </div>
+        )}
+        {supported && !listening && (
           <Button size="lg" className="h-14 px-8 text-base" onClick={startNfcCheckIn} disabled={busy}>
             {error ? "Try again" : "Start"}
+          </Button>
+        )}
+        {!supported && (
+          <Button size="lg" variant="outline" className="h-14 px-8 text-base" onClick={onClose}>
+            Go back
           </Button>
         )}
       </div>
