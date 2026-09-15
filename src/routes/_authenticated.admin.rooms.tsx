@@ -47,7 +47,12 @@ async function downloadAllAsZip(rooms: any[]) {
 
 
 export const Route = createFileRoute("/_authenticated/admin/rooms")({
-  head: () => ({ meta: [{ title: "Rooms & QR codes — Admin" }] }),
+  head: () => ({
+    meta: [
+      { title: "Rooms — Admin" },
+      { name: "description", content: "Add rooms and link each room's NFC tag for staff check-ins." },
+    ],
+  }),
   component: Page,
 });
 
@@ -56,9 +61,25 @@ function Page() {
   const lFac = useServerFn(listFacilities);
   const bulk = useServerFn(bulkAddRooms);
   const del = useServerFn(deleteRoom);
+  const lTags = useServerFn(listRoomNfcTags);
   const qc = useQueryClient();
   const { data: rooms } = useSuspenseQuery({ queryKey: ["rooms"], queryFn: () => fn({}) });
   const { data: facilities } = useSuspenseQuery({ queryKey: ["facilities"], queryFn: () => lFac({}) });
+  const { data: tags } = useSuspenseQuery({ queryKey: ["room-nfc-tags"], queryFn: () => lTags({}) });
+
+  const tagsByRoom = useMemo(() => {
+    const m = new Map<string, any[]>();
+    for (const t of (tags ?? []) as any[]) {
+      const list = m.get(t.room_id) ?? [];
+      list.push(t);
+      m.set(t.room_id, list);
+    }
+    return m;
+  }, [tags]);
+
+  // Rooms queued for tag scanning (after adding, or a single room from the list).
+  const [queue, setQueue] = useState<{ id: string; room_number: string }[]>([]);
+  const current = queue[0];
 
   const allFloors = useMemo(() => {
     const out: { id: string; label: string }[] = [];
