@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RoomScanner, ScanResultCard, type ScanResult } from "@/components/RoomScanner";
 import { NfcCheckIn, isNfcSupported } from "@/components/NfcCheckIn";
 import { fmtTime } from "@/lib/format";
+import { QR_ENABLED } from "@/lib/features";
 
 export const Route = createFileRoute("/_authenticated/staff")({
   ssr: false,
@@ -131,7 +132,7 @@ function StaffPage() {
     return (
       <NfcCheckIn
         busy={mutate.isPending}
-        onClose={() => setMode("choose")}
+        onClose={() => setMode(QR_ENABLED ? "choose" : "closed")}
         onToken={(token) => {
           setMode("closed");
           mutate.mutate({ qr_token: token, input_method: "nfc" });
