@@ -85,7 +85,7 @@ function Page() {
   return (
     <div className="mx-auto max-w-5xl p-4 space-y-4">
       <div className="flex flex-wrap gap-3 items-end justify-between">
-        <h1 className="text-2xl font-bold">Rooms & QR codes</h1>
+        <h1 className="text-2xl font-bold">{QR_ENABLED ? "Rooms & QR codes" : "Rooms"}</h1>
         <div className="flex gap-2 flex-wrap">
           {QR_ENABLED && (
             <>
@@ -110,7 +110,7 @@ function Page() {
           <strong>Two ways to use NFC.</strong> Android phones running Chrome, Edge, or Samsung Internet read tags
           directly. iPads and iPhones need an NFC reader connected to them — those readers send the tag's serial
           number into the check-in screen. Link each tag's serial number to its room first under{" "}
-          <strong>Link NFC tags</strong>. QR scanning stays available on every device.
+          <strong>Link NFC tags</strong>.{QR_ENABLED ? " QR scanning stays available on every device." : ""}
         </AlertDescription>
       </Alert>
 
