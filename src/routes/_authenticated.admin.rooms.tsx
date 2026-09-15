@@ -180,12 +180,28 @@ function Page() {
           <ul className="divide-y">
             {(rooms ?? []).map((r: any) => (
               <li key={r.id} className="py-3 space-y-3">
-                <div className={`grid items-center gap-3 ${QR_ENABLED ? "grid-cols-[auto_minmax(0,1fr)_auto_auto_auto]" : "grid-cols-[minmax(0,1fr)_auto]"}`}>
+                <div className="flex flex-wrap items-center gap-3">
                   {QR_ENABLED && <RoomQR token={r.qr_token} size={72} />}
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="font-medium">Room {r.room_number}</div>
                     <div className="text-xs text-muted-foreground truncate">{r.floors?.facilities?.name} · {r.floors?.name}</div>
+                    <div className="text-xs mt-0.5">
+                      {(tagsByRoom.get(r.id) ?? []).length ? (
+                        <span className="text-muted-foreground truncate">
+                          Tag linked: {(tagsByRoom.get(r.id) ?? []).map((t: any) => t.tag_uid).join(", ")}
+                        </span>
+                      ) : (
+                        <span className="text-destructive">No tag linked yet</span>
+                      )}
+                    </div>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setQueue([{ id: r.id, room_number: r.room_number }]); setQueueTotal(1); }}
+                  >
+                    <Smartphone className="h-4 w-4 mr-1" /> Scan tag
+                  </Button>
                   {QR_ENABLED && (
                     <>
                       <Button
