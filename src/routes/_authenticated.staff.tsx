@@ -2,15 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Smartphone, QrCode, X, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Camera, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getMyStaffDashboard, submitRoundScan } from "@/lib/api/rounding.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { RoomScanner, ScanResultCard, type ScanResult } from "@/components/RoomScanner";
-import { NfcCheckIn, isNfcSupported } from "@/components/NfcCheckIn";
+import { NfcCheckIn } from "@/components/NfcCheckIn";
+import { CheckInChooser } from "@/components/CheckInChooser";
 import { fmtTime } from "@/lib/format";
-import { QR_ENABLED } from "@/lib/features";
 
 export const Route = createFileRoute("/_authenticated/staff")({
   ssr: false,
@@ -35,7 +35,6 @@ function StaffPage() {
   const [mode, setMode] = useState<"closed" | "choose" | "qr" | "nfc">("closed");
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const signedOutRef = useRef(false);
-  const nfc = isNfcSupported();
 
   const { data } = useSuspenseQuery({
     queryKey: ["my-staff-dashboard"],
@@ -94,37 +93,16 @@ function StaffPage() {
 
   if (mode === "choose") {
     return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col">
-        <div className="flex items-center justify-between p-3 border-b">
-          <div className="font-semibold">Check in</div>
-          <Button variant="ghost" onClick={() => setMode("closed")} aria-label="Close">
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-        <div className="flex-1 flex flex-col justify-center gap-4 p-6 max-w-md w-full mx-auto">
-          <p className="text-sm text-muted-foreground text-center">
-            Choose how you want to check in to this room.
-          </p>
-          {QR_ENABLED && (
-            <Button size="lg" className="w-full h-20 text-base" onClick={() => setMode("qr")}>
-              <QrCode className="h-6 w-6 mr-2" /> Scan QR code
-            </Button>
-          )}
-          <Button
-            size="lg"
-            variant="outline"
-            className="w-full h-20 text-base"
-            onClick={() => setMode("nfc")}
-          >
-            <Smartphone className="h-6 w-6 mr-2" /> Scan NFC tag
-          </Button>
-          {!nfc && (
-            <p className="text-xs text-muted-foreground text-center">
-              On this device, NFC works through a connected tag reader.
-            </p>
-          )}
-        </div>
-      </div>
+      <CheckInChooser
+        busy={mutate.isPending}
+        onClose={() => setMode("closed")}
+        onPickQr={() => setMode("qr")}
+        onPickNfc={() => setMode("nfc")}
+        onManual={(code) => {
+          setMode("closed");
+          mutate.mutate({ qr_token: code, input_method: "nfc" });
+        }}
+      />
     );
   }
 
@@ -132,7 +110,7 @@ function StaffPage() {
     return (
       <NfcCheckIn
         busy={mutate.isPending}
-        onClose={() => setMode(QR_ENABLED ? "choose" : "closed")}
+        onClose={() => setMode("choose")}
         onToken={(token) => {
           setMode("closed");
           mutate.mutate({ qr_token: token, input_method: "nfc" });
@@ -175,7 +153,7 @@ function StaffPage() {
         </p>
       </div>
 
-      <Button size="lg" className="w-full h-16 text-base" onClick={() => setMode(QR_ENABLED ? "choose" : "nfc")}>
+      <Button size="lg" className="w-full h-16 text-base" onClick={() => setMode("choose")}>
         <Camera className="h-6 w-6 mr-2" /> Check In
       </Button>
 
