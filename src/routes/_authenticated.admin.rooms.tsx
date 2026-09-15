@@ -91,12 +91,22 @@ function Page() {
   const [floorId, setFloorId] = useState("");
   const [start, setStart] = useState(101);
   const [end, setEnd] = useState(110);
-  const [prefix, setPrefix] = useState("");
+  const [suffix, setSuffix] = useState("");
   const add = useMutation({
-    mutationFn: () => bulk({ data: { floor_id: floorId, start, end, prefix } }),
-    onSuccess: () => { toast.success("Rooms added"); qc.invalidateQueries({ queryKey: ["rooms"] }); },
+    mutationFn: () => bulk({ data: { floor_id: floorId, start, end, suffix } }),
+    onSuccess: (created: any) => {
+      toast.success("Rooms added — now scan each room's tag");
+      qc.invalidateQueries({ queryKey: ["rooms"] });
+      const list = ((created ?? []) as any[]).map((r) => ({ id: r.id, room_number: r.room_number }));
+      list.sort((a, b) => String(a.room_number).localeCompare(String(b.room_number), undefined, { numeric: true }));
+      setQueue(list);
+    },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const queueTotal = useRef(0);
+  if (queue.length > queueTotal.current) queueTotal.current = queue.length;
+  if (queue.length === 0) queueTotal.current = 0;
 
   const removeRoom = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
