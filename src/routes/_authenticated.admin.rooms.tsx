@@ -102,13 +102,11 @@ function Page() {
       const list = ((created ?? []) as any[]).map((r) => ({ id: r.id, room_number: r.room_number }));
       list.sort((a, b) => String(a.room_number).localeCompare(String(b.room_number), undefined, { numeric: true }));
       setQueue(list);
+      setQueueTotal(list.length);
     },
     onError: (e: any) => toast.error(e.message),
   });
 
-  const queueTotal = useRef(0);
-  if (queue.length > queueTotal.current) queueTotal.current = queue.length;
-  if (queue.length === 0) queueTotal.current = 0;
 
   const removeRoom = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
