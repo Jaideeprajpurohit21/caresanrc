@@ -1,2 +1,3 @@
-// Feature toggles. Flip to true to re-enable QR code check-ins and QR printing.
-export const QR_ENABLED = false;
+// QR check-in is the universal fallback for devices without in-browser NFC
+// (iPhone, iPad, desktop). Keep this enabled unless QR is retired entirely.
+export const QR_ENABLED = true;
