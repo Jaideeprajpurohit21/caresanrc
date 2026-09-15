@@ -8,6 +8,7 @@ import { RoomScanner, ScanResultCard, type ScanResult } from "@/components/RoomS
 import { NfcCheckIn, isNfcSupported } from "@/components/NfcCheckIn";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { QR_ENABLED } from "@/lib/features";
 
 export const Route = createFileRoute("/scan")({
   ssr: false,
@@ -27,7 +28,7 @@ function ScanPage() {
   const navigate = useNavigate();
   const scan = useServerFn(submitRoundScan);
   const [ready, setReady] = useState(false);
-  const [mode, setMode] = useState<"closed" | "choose" | "qr" | "nfc">("choose");
+  const [mode, setMode] = useState<"closed" | "choose" | "qr" | "nfc">(QR_ENABLED ? "choose" : "nfc");
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const nfc = isNfcSupported();
   const { code } = Route.useSearch();
@@ -78,9 +79,11 @@ function ScanPage() {
         <p className="text-sm text-muted-foreground text-center">
           Choose how you want to check in to this room.
         </p>
-        <Button size="lg" className="w-full h-20 text-base" onClick={() => setMode("qr")}>
-          Scan QR code
-        </Button>
+        {QR_ENABLED && (
+          <Button size="lg" className="w-full h-20 text-base" onClick={() => setMode("qr")}>
+            Scan QR code
+          </Button>
+        )}
         <Button size="lg" variant="outline" className="w-full h-20 text-base" onClick={() => setMode("nfc")}>
           Scan NFC tag
         </Button>
@@ -97,7 +100,7 @@ function ScanPage() {
     return (
       <NfcCheckIn
         busy={mutate.isPending}
-        onClose={() => setMode("choose")}
+        onClose={() => setMode(QR_ENABLED ? "choose" : "closed")}
         onToken={(token) => mutate.mutate({ qr_token: token, input_method: "nfc" })}
       />
     );
@@ -119,7 +122,7 @@ function ScanPage() {
   return (
     <div className="mx-auto max-w-md p-4 space-y-3 min-h-screen">
       {lastResult && <ScanResultCard result={lastResult} onDismiss={() => setLastResult(null)} />}
-      <Button className="w-full" onClick={() => setMode("choose")}>
+      <Button className="w-full" onClick={() => setMode(QR_ENABLED ? "choose" : "nfc")}>
         Check in again
       </Button>
     </div>
