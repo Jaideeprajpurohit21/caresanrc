@@ -86,20 +86,21 @@ export const listRooms = createServerFn({ method: "GET" })
 
 export const bulkAddRooms = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { floor_id: string; start: number; end: number; prefix?: string }) =>
+  .inputValidator((d: { floor_id: string; start: number; end: number; prefix?: string; suffix?: string }) =>
     z.object({
       floor_id: z.string().uuid(),
       start: z.number().int().min(0).max(9999),
       end: z.number().int().min(0).max(9999),
       prefix: z.string().max(10).optional(),
+      suffix: z.string().max(10).optional(),
     }).refine((v) => v.end >= v.start && v.end - v.start <= 500, { message: "Range must be ascending and at most 500 rooms at a time" }).parse(d))
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
     const rows: any[] = [];
     for (let n = data.start; n <= data.end; n++) {
-      rows.push({ floor_id: data.floor_id, room_number: `${data.prefix ?? ""}${n}` });
+      rows.push({ floor_id: data.floor_id, room_number: `${data.prefix ?? ""}${n}${data.suffix ?? ""}` });
     }
-    const { data: inserted, error } = await context.supabase.from("rooms").insert(rows).select();
+    const { data: inserted, error } = await context.supabase.from("rooms").insert(rows).select("id,room_number");
     if (error) throw new Error(error.message);
     return inserted;
   });
