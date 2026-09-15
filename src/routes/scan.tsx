@@ -74,25 +74,16 @@ function ScanPage() {
 
   if (mode === "choose") {
     return (
-      <div className="mx-auto max-w-md p-6 min-h-screen flex flex-col justify-center gap-4">
-        <h1 className="text-xl font-semibold text-center">Check in</h1>
-        <p className="text-sm text-muted-foreground text-center">
-          Choose how you want to check in to this room.
-        </p>
-        {QR_ENABLED && (
-          <Button size="lg" className="w-full h-20 text-base" onClick={() => setMode("qr")}>
-            Scan QR code
-          </Button>
-        )}
-        <Button size="lg" variant="outline" className="w-full h-20 text-base" onClick={() => setMode("nfc")}>
-          Scan NFC tag
-        </Button>
-        {!nfc && (
-          <p className="text-xs text-muted-foreground text-center">
-            On this device, NFC works through a connected tag reader.
-          </p>
-        )}
-      </div>
+      <CheckInChooser
+        busy={mutate.isPending}
+        onClose={() => setMode("closed")}
+        onPickQr={() => setMode("qr")}
+        onPickNfc={() => setMode("nfc")}
+        onManual={(c) => {
+          setMode("closed");
+          mutate.mutate({ qr_token: c, input_method: "nfc" });
+        }}
+      />
     );
   }
 
@@ -100,7 +91,7 @@ function ScanPage() {
     return (
       <NfcCheckIn
         busy={mutate.isPending}
-        onClose={() => setMode(QR_ENABLED ? "choose" : "closed")}
+        onClose={() => setMode("choose")}
         onToken={(token) => mutate.mutate({ qr_token: token, input_method: "nfc" })}
       />
     );
