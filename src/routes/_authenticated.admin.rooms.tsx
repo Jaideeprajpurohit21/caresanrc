@@ -146,18 +146,33 @@ function Page() {
       </Alert>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Bulk add rooms</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">Add Rooms</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-2">
           <Select value={floorId} onValueChange={setFloorId}>
             <SelectTrigger className="col-span-2"><SelectValue placeholder="Choose floor" /></SelectTrigger>
             <SelectContent>{allFloors.map((f) => <SelectItem key={f.id} value={f.id}>{f.label}</SelectItem>)}</SelectContent>
           </Select>
-          <Input placeholder="Prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
+          <Input placeholder="Suffix" value={suffix} onChange={(e) => setSuffix(e.target.value)} aria-label="Suffix" />
           <Input type="number" value={start} onChange={(e) => setStart(+e.target.value)} placeholder="Start" />
           <Input type="number" value={end} onChange={(e) => setEnd(+e.target.value)} placeholder="End" />
-          <Button className="col-span-2 md:col-span-5" disabled={!floorId || add.isPending} onClick={() => add.mutate()}>Add rooms</Button>
+          <Button className="col-span-2 md:col-span-5" disabled={!floorId || add.isPending} onClick={() => add.mutate()}>
+            {add.isPending ? "Adding…" : "Add Rooms"}
+          </Button>
         </CardContent>
       </Card>
+
+      {current && (
+        <RoomTagScanner
+          key={current.id}
+          roomId={current.id}
+          roomNumber={current.room_number}
+          progressLabel={queueTotal > 1 ? `${queueTotal - queue.length + 1} of ${queueTotal}` : undefined}
+          onLinked={advance}
+          onSkip={queue.length > 1 ? advance : undefined}
+          onClose={() => setQueue([])}
+        />
+      )}
+
 
       <Card>
         <CardHeader><CardTitle className="text-base">{(rooms ?? []).length} rooms</CardTitle></CardHeader>
