@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { listRooms, listFacilities, bulkAddRooms, deleteRoom } from "@/lib/api/rounding.functions";
+import { listRooms, listFacilities, bulkAddRooms, deleteRoom, listRoomNfcTags } from "@/lib/api/rounding.functions";
+import { RoomTagScanner } from "@/components/RoomTagScanner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
