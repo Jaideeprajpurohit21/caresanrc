@@ -2,15 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Smartphone, QrCode, X, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Camera, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getMyStaffDashboard, submitRoundScan } from "@/lib/api/rounding.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { RoomScanner, ScanResultCard, type ScanResult } from "@/components/RoomScanner";
-import { NfcCheckIn, isNfcSupported } from "@/components/NfcCheckIn";
+import { NfcCheckIn } from "@/components/NfcCheckIn";
+import { CheckInChooser } from "@/components/CheckInChooser";
 import { fmtTime } from "@/lib/format";
-import { QR_ENABLED } from "@/lib/features";
 
 export const Route = createFileRoute("/_authenticated/staff")({
   ssr: false,
@@ -35,7 +35,6 @@ function StaffPage() {
   const [mode, setMode] = useState<"closed" | "choose" | "qr" | "nfc">("closed");
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const signedOutRef = useRef(false);
-  const nfc = isNfcSupported();
 
   const { data } = useSuspenseQuery({
     queryKey: ["my-staff-dashboard"],
@@ -154,7 +153,7 @@ function StaffPage() {
         </p>
       </div>
 
-      <Button size="lg" className="w-full h-16 text-base" onClick={() => setMode(QR_ENABLED ? "choose" : "nfc")}>
+      <Button size="lg" className="w-full h-16 text-base" onClick={() => setMode("choose")}>
         <Camera className="h-6 w-6 mr-2" /> Check In
       </Button>
 
