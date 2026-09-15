@@ -5,10 +5,10 @@ import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { submitRoundScan } from "@/lib/api/rounding.functions";
 import { RoomScanner, ScanResultCard, type ScanResult } from "@/components/RoomScanner";
-import { NfcCheckIn, isNfcSupported } from "@/components/NfcCheckIn";
+import { NfcCheckIn } from "@/components/NfcCheckIn";
+import { CheckInChooser } from "@/components/CheckInChooser";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { QR_ENABLED } from "@/lib/features";
 
 export const Route = createFileRoute("/scan")({
   ssr: false,
@@ -28,9 +28,8 @@ function ScanPage() {
   const navigate = useNavigate();
   const scan = useServerFn(submitRoundScan);
   const [ready, setReady] = useState(false);
-  const [mode, setMode] = useState<"closed" | "choose" | "qr" | "nfc">(QR_ENABLED ? "choose" : "nfc");
+  const [mode, setMode] = useState<"closed" | "choose" | "qr" | "nfc">("choose");
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
-  const nfc = isNfcSupported();
   const { code } = Route.useSearch();
   const autoSent = useRef(false);
 
@@ -113,7 +112,7 @@ function ScanPage() {
   return (
     <div className="mx-auto max-w-md p-4 space-y-3 min-h-screen">
       {lastResult && <ScanResultCard result={lastResult} onDismiss={() => setLastResult(null)} />}
-      <Button className="w-full" onClick={() => setMode(QR_ENABLED ? "choose" : "nfc")}>
+      <Button className="w-full" onClick={() => setMode("choose")}>
         Check in again
       </Button>
     </div>
