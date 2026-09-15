@@ -1,3 +1,3 @@
-// QR check-in is the universal fallback for devices without in-browser NFC
-// (iPhone, iPad, desktop). Keep this enabled unless QR is retired entirely.
-export const QR_ENABLED = true;
+// QR check-in is currently disabled. Flip to true to re-enable QR everywhere
+// (staff check-in chooser, /scan page, admin QR images/printing/downloads).
+export const QR_ENABLED = false;
