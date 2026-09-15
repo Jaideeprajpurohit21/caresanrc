@@ -30,6 +30,16 @@ export function NfcCheckIn({
     setSupported(isWebNfcAvailable());
   }, []);
 
+  // Phones with built-in NFC (Android Chrome): start listening on their own —
+  // no external reader is needed or asked for.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (!supported || autoStartedRef.current) return;
+    autoStartedRef.current = true;
+    startNfcCheckIn();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supported]);
+
   // External readers (USB or Bluetooth) usually behave like a keyboard.
   useEffect(() => {
     return startKeyboardWedge(
