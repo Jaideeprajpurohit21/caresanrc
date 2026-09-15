@@ -63,6 +63,20 @@ function Page() {
 
   const canSave = !!roomId && tagUid.trim().length >= 2 && !save.isPending;
 
+  function attemptSave() {
+    if (save.isPending) return;
+    if (!roomId) {
+      toast.error("Choose a room first");
+      return;
+    }
+    if (tagUid.trim().length < 2) {
+      toast.error("Enter the tag's serial number, or hold the tag against a connected reader");
+      inputRef.current?.focus();
+      return;
+    }
+    save.mutate();
+  }
+
   return (
     <div className="mx-auto max-w-3xl p-4 space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -110,9 +124,13 @@ function Page() {
             aria-label="Tag serial number"
           />
           <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label (optional)" />
-          <Button className="md:col-span-4" disabled={!canSave} onClick={() => save.mutate()}>
-            Link tag
+          <Button className="md:col-span-4" onClick={attemptSave}>
+            {save.isPending ? "Linking…" : "Link tag"}
           </Button>
+          <p className="md:col-span-4 text-xs text-muted-foreground">
+            On an iPhone or iPad the serial number can't be read by the browser: type or paste it from the tag,
+            or hold the tag against a connected reader.
+          </p>
         </CardContent>
       </Card>
 
