@@ -79,7 +79,9 @@ function Page() {
 
   // Rooms queued for tag scanning (after adding, or a single room from the list).
   const [queue, setQueue] = useState<{ id: string; room_number: string }[]>([]);
+  const [queueTotal, setQueueTotal] = useState(0);
   const current = queue[0];
+  const advance = () => setQueue((q) => q.slice(1));
 
   const allFloors = useMemo(() => {
     const out: { id: string; label: string }[] = [];
