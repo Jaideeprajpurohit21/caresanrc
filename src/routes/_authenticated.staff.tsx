@@ -104,9 +104,11 @@ function StaffPage() {
           <p className="text-sm text-muted-foreground text-center">
             Choose how you want to check in to this room.
           </p>
-          <Button size="lg" className="w-full h-20 text-base" onClick={() => setMode("qr")}>
-            <QrCode className="h-6 w-6 mr-2" /> Scan QR code
-          </Button>
+          {QR_ENABLED && (
+            <Button size="lg" className="w-full h-20 text-base" onClick={() => setMode("qr")}>
+              <QrCode className="h-6 w-6 mr-2" /> Scan QR code
+            </Button>
+          )}
           <Button
             size="lg"
             variant="outline"
@@ -172,7 +174,7 @@ function StaffPage() {
         </p>
       </div>
 
-      <Button size="lg" className="w-full h-16 text-base" onClick={() => setMode("choose")}>
+      <Button size="lg" className="w-full h-16 text-base" onClick={() => setMode(QR_ENABLED ? "choose" : "nfc")}>
         <Camera className="h-6 w-6 mr-2" /> Check In
       </Button>
 
