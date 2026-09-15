@@ -138,10 +138,10 @@ function Page() {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription className="text-sm">
-          <strong>Two ways to use NFC.</strong> Android phones running Chrome, Edge, or Samsung Internet read tags
-          directly. iPads and iPhones need an NFC reader connected to them — those readers send the tag's serial
-          number into the check-in screen. Link each tag's serial number to its room first under{" "}
-          <strong>Link NFC tags</strong>.{QR_ENABLED ? " QR scanning stays available on every device." : ""}
+          <strong>Tags are linked as you add rooms.</strong> After you add rooms, scan each room's tag right here and
+          it's saved to that room. Android phones with Chrome read tags directly; iPads and iPhones need a connected
+          reader, or you can type the serial printed on the tag.
+          {QR_ENABLED ? " QR scanning stays available on every device." : ""}
         </AlertDescription>
       </Alert>
 
