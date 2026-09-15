@@ -14,6 +14,7 @@ import { NfcTagWriter } from "@/components/NfcTagWriter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import QRCode from "qrcode";
+import { QR_ENABLED } from "@/lib/features";
 
 async function makeQrPngBlob(token: string): Promise<Blob> {
   const canvas = document.createElement("canvas");
@@ -84,18 +85,22 @@ function Page() {
   return (
     <div className="mx-auto max-w-5xl p-4 space-y-4">
       <div className="flex flex-wrap gap-3 items-end justify-between">
-        <h1 className="text-2xl font-bold">Rooms & QR codes</h1>
+        <h1 className="text-2xl font-bold">{QR_ENABLED ? "Rooms & QR codes" : "Rooms"}</h1>
         <div className="flex gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            disabled={!(rooms ?? []).length}
-            onClick={() => downloadAllAsZip(rooms ?? []).catch((e) => toast.error(e?.message ?? "Download failed"))}
-          >
-            <Archive className="h-4 w-4 mr-2" /> Download all (ZIP)
-          </Button>
+          {QR_ENABLED && (
+            <>
+              <Button
+                variant="outline"
+                disabled={!(rooms ?? []).length}
+                onClick={() => downloadAllAsZip(rooms ?? []).catch((e) => toast.error(e?.message ?? "Download failed"))}
+              >
+                <Archive className="h-4 w-4 mr-2" /> Download all (ZIP)
+              </Button>
+              <Link to="/admin/rooms/labels"><Button variant="outline"><Tag className="h-4 w-4 mr-2" /> Print door labels</Button></Link>
+              <Link to="/admin/rooms/print"><Button variant="outline"><Printer className="h-4 w-4 mr-2" /> Print QR sheet</Button></Link>
+            </>
+          )}
           <Link to="/admin/rooms/nfc"><Button variant="outline"><Smartphone className="h-4 w-4 mr-2" /> Link NFC tags</Button></Link>
-          <Link to="/admin/rooms/labels"><Button variant="outline"><Tag className="h-4 w-4 mr-2" /> Print door labels</Button></Link>
-          <Link to="/admin/rooms/print"><Button variant="outline"><Printer className="h-4 w-4 mr-2" /> Print QR sheet</Button></Link>
         </div>
       </div>
 
@@ -105,7 +110,7 @@ function Page() {
           <strong>Two ways to use NFC.</strong> Android phones running Chrome, Edge, or Samsung Internet read tags
           directly. iPads and iPhones need an NFC reader connected to them — those readers send the tag's serial
           number into the check-in screen. Link each tag's serial number to its room first under{" "}
-          <strong>Link NFC tags</strong>. QR scanning stays available on every device.
+          <strong>Link NFC tags</strong>.{QR_ENABLED ? " QR scanning stays available on every device." : ""}
         </AlertDescription>
       </Alert>
 
@@ -129,22 +134,26 @@ function Page() {
           <ul className="divide-y">
             {(rooms ?? []).map((r: any) => (
               <li key={r.id} className="py-3 space-y-3">
-                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] items-center gap-3">
-                  <RoomQR token={r.qr_token} size={72} />
+                <div className={`grid items-center gap-3 ${QR_ENABLED ? "grid-cols-[auto_minmax(0,1fr)_auto_auto_auto]" : "grid-cols-[minmax(0,1fr)_auto]"}`}>
+                  {QR_ENABLED && <RoomQR token={r.qr_token} size={72} />}
                   <div className="min-w-0">
                     <div className="font-medium">Room {r.room_number}</div>
                     <div className="text-xs text-muted-foreground truncate">{r.floors?.facilities?.name} · {r.floors?.name}</div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => downloadRoomQr(r.qr_token, r.room_number).catch((e) => toast.error(e?.message ?? "Download failed"))}
-                  >
-                    <Download className="h-4 w-4 mr-1" /> Download
-                  </Button>
-                  <Link to="/admin/rooms/$roomId/label" params={{ roomId: r.id }}>
-                    <Button variant="outline" size="sm"><Tag className="h-4 w-4 mr-1" /> Door label</Button>
-                  </Link>
+                  {QR_ENABLED && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadRoomQr(r.qr_token, r.room_number).catch((e) => toast.error(e?.message ?? "Download failed"))}
+                      >
+                        <Download className="h-4 w-4 mr-1" /> Download
+                      </Button>
+                      <Link to="/admin/rooms/$roomId/label" params={{ roomId: r.id }}>
+                        <Button variant="outline" size="sm"><Tag className="h-4 w-4 mr-1" /> Door label</Button>
+                      </Link>
+                    </>
+                  )}
                   <Button variant="ghost" size="icon" onClick={() => removeRoom.mutate(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
                 <NfcTagWriter token={String(r.qr_token)} roomNumber={r.room_number} />
