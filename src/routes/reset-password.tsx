@@ -71,7 +71,7 @@ function ResetPasswordPage() {
           {done ? (
             <div className="space-y-3 text-center">
               <p className="text-sm text-foreground">Password updated successfully. You can now log in.</p>
-              <Button className="w-full" onClick={() => navigate({ to: "/auth", search: {} })}>
+              <Button className="w-full" onClick={() => navigate({ to: "/auth", search: { redirect: undefined } })}>
                 Return to Login
               </Button>
             </div>
@@ -80,7 +80,7 @@ function ResetPasswordPage() {
               <p className="text-sm text-muted-foreground">
                 This reset link has expired or has already been used. Request a new one from the login page.
               </p>
-              <Button variant="outline" className="w-full" onClick={() => navigate({ to: "/auth", search: {} })}>
+              <Button variant="outline" className="w-full" onClick={() => navigate({ to: "/auth", search: { redirect: undefined } })}>
                 Return to Login
               </Button>
             </div>
